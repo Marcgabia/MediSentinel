@@ -1,0 +1,41 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/qa/findings" class="text-xs text-slate-500 hover:text-slate-900">← QA Findings</a>
+    <h1 class="page-title mt-1">{{finding.title}}</h1>
+    <p class="page-sub">{{finding.findingCode}} · {{finding.categoryLabel}}</p>
+  </div>
+  <div class="actions">{{badge finding.severity}} {{badge finding.status}}</div>
+</div>
+
+<div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+  <div class="card xl:col-span-2">
+    <div class="card-body space-y-5">
+      <p class="text-sm text-slate-700">{{finding.description}}</p>
+      <div class="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800"><span class="font-medium">Recommended action:</span> {{finding.recommendedAction}}</div>
+      <dl class="kv">
+        <dt>System</dt><dd>{{default finding.sourceSystem.name "—"}}</dd>
+        <dt>Related event</dt><dd>{{#if finding.relatedAuditLogId}}<a class="link" href="/audit/{{finding.relatedAuditLogId}}">#{{finding.relatedAuditLogId}}</a>{{else}}{{default finding.relatedEventId "—"}}{{/if}}</dd>
+        <dt>First detected</dt><dd>{{date finding.firstDetectedAt}}{{#if finding.run}} · <a class="link" href="/qa/runs/{{finding.run.id}}">{{padId "QA-RUN-" finding.run.id 5}}</a>{{/if}}</dd>
+        <dt>Last detected</dt><dd>{{date finding.lastDetectedAt}} · {{finding.occurrenceCount}}×</dd>
+        <dt>Assigned to</dt><dd>{{default finding.assignedTo.fullName "—"}}</dd>
+        {{#if finding.resolutionNotes}}<dt>Notes</dt><dd class="whitespace-pre-line">{{finding.resolutionNotes}}</dd>{{/if}}
+        {{#if finding.verifiedAt}}<dt>Verified</dt><dd>{{date finding.verifiedAt}} · {{finding.verificationNote}}</dd>{{/if}}
+      </dl>
+    </div>
+  </div>
+  {{#if canManage}}
+  <form method="POST" action="/qa/findings/{{finding.id}}" class="card h-fit">
+    {{> csrf}}
+    <div class="card-header"><h2 class="card-title">Update</h2></div>
+    <div class="card-body space-y-3">
+      <div><label class="label">Status</label><select class="input" name="status">{{#each statuses}}<option value="{{this}}" {{selected this ../finding.status}}>{{humanize this}}</option>{{/each}}</select></div>
+      <div><label class="label">Assigned to</label><select class="input" name="assignedToUserId"><option value="">—</option>{{#each assignees}}<option value="{{id}}" {{selected id ../finding.assignedToUserId}}>{{fullName}}</option>{{/each}}</select></div>
+      <div><label class="label">Notes</label><textarea class="input" name="notes" rows="3" placeholder="Required to resolve"></textarea></div>
+      <button class="btn-primary w-full" type="submit">Save</button>
+      <p class="help">Resolved findings are verified automatically by the next run.</p>
+    </div>
+  </form>
+  {{/if}}
+</div>
+{{> footer}}

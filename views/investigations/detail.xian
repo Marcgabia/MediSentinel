@@ -1,0 +1,106 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/investigations" class="text-xs text-slate-500 hover:text-slate-900">← Investigations</a>
+    <h1 class="page-title mt-1">{{record.title}}</h1>
+    <p class="page-sub">{{record.caseNumber}} · opened {{dateOnly record.createdAt}} by {{record.createdBy.fullName}}</p>
+  </div>
+  <div class="actions">{{badge record.severity}} {{badge record.status}} <button type="button" class="btn-secondary no-print" data-print>Print</button></div>
+</div>
+
+<div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+  <div class="space-y-5 xl:col-span-2">
+    <div class="card">
+      <div class="card-body space-y-4">
+        <p class="whitespace-pre-line text-sm text-slate-700">{{record.description}}</p>
+        <dl class="kv">
+          <dt>System</dt><dd>{{default record.sourceSystem.name "—"}}</dd>
+          <dt>Investigator</dt><dd>{{default record.assignedTo.fullName "Unassigned"}}</dd>
+          {{#if record.originAlert}}<dt>From alert</dt><dd><a class="link" href="/alerts/{{record.originAlert.id}}">{{record.originAlert.title}}</a></dd>{{/if}}
+          <dt>Last updated</dt><dd>{{date record.updatedAt}}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Findings</h2></div>
+      {{#if (and canManage (not isClosed))}}
+      <form method="POST" action="/investigations/{{record.id}}/findings" class="card-body space-y-3">{{> csrf}}
+        <div><label class="label">Findings</label><textarea class="input" name="findings" rows="4">{{record.findings}}</textarea></div>
+        <div><label class="label">Resolution</label><textarea class="input" name="resolutionNotes" rows="2">{{record.resolutionNotes}}</textarea></div>
+        <button class="btn-secondary" type="submit">Save</button>
+      </form>
+      {{else}}
+      <div class="card-body space-y-3 text-sm">
+        <div><div class="label">Findings</div><p class="whitespace-pre-line">{{default record.findings "—"}}</p></div>
+        <div><div class="label">Resolution</div><p class="whitespace-pre-line">{{default record.resolutionNotes "—"}}</p></div>
+      </div>
+      {{/if}}
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Evidence</h2><span class="text-xs text-slate-400">Original audit records</span></div>
+      {{#if record.eventLinks.length}}
+      <div class="table-wrap"><table class="table">
+        <tbody>{{#each record.eventLinks}}<tr>
+          <td class="whitespace-nowrap text-slate-500">{{date auditLog.occurredAt}}</td>
+          <td><a class="link font-normal" href="/audit/{{auditLog.id}}">{{action auditLog.actionType}}</a><div class="cell-sub">{{auditLog.entityId}}</div></td>
+          <td>{{auditLog.actorUsername}}</td>
+          <td class="text-slate-500">{{auditLog.sourceSystemName}}</td>
+          <td class="text-right">{{badge auditLog.outcome}}</td>
+        </tr>{{/each}}</tbody>
+      </table></div>
+      {{else}}<div class="empty">No events attached</div>{{/if}}
+      {{#if (and canManage (not isClosed))}}
+      <form method="POST" action="/investigations/{{record.id}}/events" class="flex gap-2 border-t border-slate-100 px-5 py-3 no-print">{{> csrf}}
+        <input class="input mono" name="identifiers" placeholder="Audit IDs or event IDs, comma-separated" required />
+        <button class="btn-secondary" type="submit">Attach</button>
+      </form>
+      {{/if}}
+    </div>
+  </div>
+
+  <div class="space-y-5">
+    {{#if canManage}}
+    <div class="card no-print">
+      <div class="card-header"><h2 class="card-title">Update</h2></div>
+      <div class="card-body space-y-4">
+        {{#if record.allowedTransitions.length}}
+        <form method="POST" action="/investigations/{{record.id}}/status" class="space-y-2">{{> csrf}}
+          <label class="label">Status</label>
+          <select class="input" name="status">{{#each record.allowedTransitions}}<option value="{{this}}">{{humanize this}}</option>{{/each}}</select>
+          <input class="input" name="note" placeholder="Reason (required to resolve)" />
+          <button class="btn-primary w-full" type="submit">Change status</button>
+        </form>
+        {{/if}}
+        <form method="POST" action="/investigations/{{record.id}}/assign" class="space-y-2">{{> csrf}}
+          <label class="label">Investigator</label>
+          <div class="flex gap-2">
+            <select class="input" name="assignedToUserId" required>{{#each investigators}}<option value="{{id}}" {{selected id ../record.assignedToUserId}}>{{fullName}}</option>{{/each}}</select>
+            <button class="btn-secondary" type="submit">Assign</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {{/if}}
+
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Notes</h2></div>
+      {{#if canManage}}
+      <form method="POST" action="/investigations/{{record.id}}/notes" class="space-y-2 border-b border-slate-100 px-5 py-3 no-print">{{> csrf}}
+        <textarea class="input" name="content" rows="2" required placeholder="Add a note"></textarea>
+        <div class="flex gap-2"><select class="input" name="noteType" aria-label="Type"><option value="NOTE">Note</option><option value="EVIDENCE">Evidence</option><option value="FINDING">Finding</option></select><button class="btn-secondary" type="submit">Add</button></div>
+      </form>
+      {{/if}}
+      <ol class="max-h-[34rem] space-y-4 overflow-y-auto px-5 py-4 text-sm">
+        {{#each record.notes}}
+        <li class="border-l-2 {{#if (eq noteType 'STATUS_CHANGE')}}border-emerald-300{{else}}border-slate-200{{/if}} pl-4">
+          <div class="flex flex-wrap gap-x-2 text-xs text-slate-500"><span class="font-medium text-slate-900">{{humanize noteType}}</span><span>{{date createdAt}}</span><span>· {{default author.fullName "System"}}</span></div>
+          <p class="mt-1 whitespace-pre-line text-slate-600">{{content}}</p>
+        </li>
+        {{else}}<li class="text-slate-400">No notes</li>{{/each}}
+      </ol>
+    </div>
+  </div>
+</div>
+{{> footer}}

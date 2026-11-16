@@ -1,0 +1,138 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/audit/transactions" class="text-xs text-slate-500 hover:text-slate-900">← Transaction timeline</a>
+    <h1 class="page-title mt-1 mono">{{ref}}</h1>
+    <p class="page-sub">{{events.length}} audit event(s){{#if correlated.length}} · {{correlated.length}} correlated event(s){{/if}} · read-only</p>
+  </div>
+  <div class="actions no-print">
+    <button type="button" class="btn-secondary" data-print>Print</button>
+    {{#if (and canInvestigate firstAuditLogId)}}<a href="/investigations/new?auditLogId={{firstAuditLogId}}" class="btn-primary">Open investigation</a>{{/if}}
+  </div>
+</div>
+{{> audit-tabs}}
+
+{{#unless events.length}}
+<div class="card"><div class="empty">No audit events reference transaction <span class="mono">{{ref}}</span>{{#if sourceSystemId}} on the selected system{{/if}}.</div></div>
+{{/unless}}
+
+{{#each analyses}}
+<div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+  <div class="card xl:col-span-2">
+    <div class="card-header"><h2 class="card-title">Summary</h2><span class="text-xs text-slate-400">{{summary.sourceSystemName}}</span></div>
+    <div class="card-body">
+      <dl class="kv">
+        <dt>Current status</dt><dd>{{#if summary.currentStatus}}{{badge summary.currentStatus}}{{else}}—{{/if}}{{#if summary.paymentStatus}} <span class="text-slate-400">· payment {{summary.paymentStatus}}</span>{{/if}}</dd>
+        <dt>Initial status</dt><dd>{{#if summary.initialStatus}}{{badge summary.initialStatus}}{{else}}—{{/if}}</dd>
+        {{#if summary.statusBeforeVoid}}<dt>Status before void</dt><dd>{{badge summary.statusBeforeVoid}}</dd>{{/if}}
+        <dt>Processed by</dt><dd>{{who summary.processedBy}}</dd>
+        <dt>Branch</dt><dd class="mono">{{default summary.branchId "—"}}</dd>
+        {{#if summary.customerRef}}<dt>Customer ref.</dt><dd class="mono">{{summary.customerRef}}</dd>{{/if}}
+        <dt>First / last event</dt><dd>{{dateTime summary.firstAt}} → {{dateTime summary.lastAt}}</dd>
+        {{#if summary.hasVoidActivity}}
+        <dt>Void requested by</dt><dd>{{#if summary.voidRequest}}{{who summary.voidRequest.by}}{{#if summary.voidRequest.at}} <span class="text-slate-400">· {{dateTime summary.voidRequest.at}}</span>{{/if}}{{else}}—{{/if}}</dd>
+        <dt>Authorized by</dt><dd>{{#if summary.authorizedBy}}{{who summary.authorizedBy}}{{else}}—{{/if}}{{#if summary.authorizationReference}} <span class="mono text-slate-400">ref {{summary.authorizationReference}}</span>{{/if}}</dd>
+        <dt>Void reason</dt><dd>{{default summary.voidReason "—"}}</dd>
+        {{/if}}
+      </dl>
+      {{#if summary.statusHistory.length}}
+      <div class="mt-4 flex flex-wrap items-center gap-1.5 text-xs">
+        {{#each summary.statusHistory}}{{#if @first}}{{#if from}}{{badge from}}{{/if}}{{/if}}<span class="text-slate-400">→</span><a href="/audit/{{auditLogId}}" title="{{action actionType}}">{{badge to}}</a>{{/each}}
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Review indicators</h2>{{#if (or issues.length indicators.length)}}{{badge "WARNING" "Needs review"}}{{else}}{{badge "PASS" "None"}}{{/if}}</div>
+    <div class="card-body space-y-2 text-sm">
+      {{#each indicators}}<div class="notice border-amber-200 bg-amber-50"><div class="font-medium text-slate-900">{{label}}</div><div class="text-xs text-slate-600">{{detail}}</div></div>{{/each}}
+      {{#each issues}}<div class="flex items-start gap-2">{{badge severity}}<span class="text-slate-700">{{message}}{{#if auditLogId}} <a class="link" href="/audit/{{auditLogId}}">#{{auditLogId}}</a>{{/if}}</span></div>{{/each}}
+      {{#unless (or issues.length indicators.length)}}<p class="text-slate-500">No inconsistencies detected in the recorded events.</p>{{/unless}}
+      <p class="text-xs text-slate-400">Indicators prompt a review. They do not by themselves imply wrongdoing.</p>
+    </div>
+  </div>
+</div>
+{{/each}}
+
+{{#if events.length}}
+<div class="card">
+  <div class="card-header"><h2 class="card-title">Timeline</h2><span class="text-xs text-slate-400">oldest first</span></div>
+  <ol class="divide-y divide-slate-100">
+    {{#each events}}
+    <li class="px-5 py-4">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="mono text-xs text-slate-400">{{add @index 1}}.</span>
+            <a href="/audit/{{id}}" class="font-medium text-slate-900 hover:text-emerald-700">{{actionName}}</a>
+            {{badge outcome}}
+          </div>
+          <div class="mt-0.5 text-sm text-slate-600">{{description}}</div>
+          <div class="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-slate-500">
+            <span>{{dateTime occurredAt}}</span>
+            <span>{{default actorUsername (default actorUserId "—")}}{{#if actorRole}} · {{actorRole}}{{/if}}</span>
+            <span>{{sourceSystemName}} · {{sourceModule}}</span>
+            {{#if trace.branchId}}<span>Branch <span class="mono">{{trace.branchId}}</span></span>{{/if}}
+            <span class="mono">#{{id}} · {{eventId}}</span>
+            {{#if correlationId}}<a class="link mono" href="/audit/cross-system?correlationId={{encode correlationId}}">{{correlationId}}</a>{{/if}}
+          </div>
+        </div>
+      </div>
+      {{#if (or trace.reason authorization)}}
+      <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+        {{#if trace.reason}}<span><span class="text-slate-400">Reason:</span> {{trace.reason}}</span>{{/if}}
+        {{#if authorization}}
+          <span><span class="text-slate-400">Authorization:</span> {{badge authorization.outcome}}</span>
+          {{#if authorization.requestedBy}}<span><span class="text-slate-400">Requested by</span> {{who authorization.requestedBy}}</span>{{/if}}
+          {{#if authorization.authorizedBy}}<span><span class="text-slate-400">Authorized by</span> {{who authorization.authorizedBy}}</span>{{/if}}
+          {{#if authorization.reference}}<span class="mono"><span class="font-sans text-slate-400">Ref</span> {{authorization.reference}}</span>{{/if}}
+        {{/if}}
+      </div>
+      {{/if}}
+      {{#if hasChanges}}
+      <div class="table-wrap mt-2"><table class="table text-xs">
+        <thead><tr><th class="w-1/4">Field</th><th>Previous</th><th>New</th></tr></thead>
+        <tbody>{{#each diffRows}}<tr>
+          <td class="font-medium text-slate-700">{{label}}</td>
+          <td class="mono break-all {{#if isChanged}}text-red-600{{else}}text-slate-500{{/if}}">{{default before "—"}}</td>
+          <td class="mono break-all {{#if isChanged}}font-semibold text-emerald-700{{else}}text-slate-500{{/if}}">{{default after "—"}}</td>
+        </tr>{{/each}}</tbody>
+      </table></div>
+      {{/if}}
+    </li>
+    {{/each}}
+  </ol>
+</div>
+{{/if}}
+
+{{#if correlated.length}}
+<div class="card">
+  <div class="card-header"><h2 class="card-title">Correlated events</h2><span class="text-xs text-slate-400">same correlation ID, other records or systems</span></div>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Time</th><th>Event</th><th>User</th><th>System</th><th>Record</th><th>Outcome</th></tr></thead>
+    <tbody>{{#each correlated}}<tr>
+      <td class="whitespace-nowrap text-slate-500">{{dateTime occurredAt}}</td>
+      <td><a class="link" href="/audit/{{id}}">{{action actionType}}</a></td>
+      <td>{{default actorUsername (default actorUserId "—")}}</td>
+      <td class="text-slate-600">{{sourceSystemName}} <span class="text-slate-400">· {{sourceModule}}</span></td>
+      <td class="mono text-xs text-slate-500">{{#if entityId}}{{entityType}} {{entityId}}{{else}}—{{/if}}</td>
+      <td>{{badge outcome}}</td>
+    </tr>{{/each}}</tbody>
+  </table></div>
+</div>
+{{/if}}
+
+<div class="card">
+  <div class="card-header"><h2 class="card-title">Investigation notes</h2></div>
+  {{#if cases.length}}
+  <ul class="divide-y divide-slate-100 text-sm">
+    {{#each cases}}
+    <li class="px-5 py-3">
+      <div class="flex items-center justify-between gap-2"><a class="link" href="/investigations/{{id}}">{{caseNumber}} · {{title}}</a>{{badge status}}</div>
+      {{#each notes}}<div class="mt-2 border-l-2 border-slate-200 pl-3 text-xs text-slate-600"><span class="text-slate-400">{{dateTime createdAt}} · {{default author.fullName "System"}} · {{humanize noteType}}</span><div class="whitespace-pre-line">{{content}}</div></div>{{/each}}
+    </li>
+    {{/each}}
+  </ul>
+  {{else}}<div class="empty">No investigation case references these events{{#if canInvestigate}}. Use “Open investigation” to start one; notes are kept on the case.{{/if}}</div>{{/if}}
+</div>
+{{> footer}}

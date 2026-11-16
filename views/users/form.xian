@@ -1,0 +1,36 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/users" class="text-xs text-slate-500 hover:text-slate-900">← User Management</a>
+    <h1 class="page-title mt-1">{{#if isNew}}New user{{else}}{{account.fullName}}{{/if}}</h1>
+    {{#unless isNew}}<p class="page-sub">{{account.username}} · last sign-in {{#if account.lastLoginAt}}{{ago account.lastLoginAt}}{{else}}never{{/if}}</p>{{/unless}}
+  </div>
+</div>
+<div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+  <form method="POST" action="{{#if isNew}}/users{{else}}/users/{{account.id}}{{/if}}" class="card xl:col-span-2" autocomplete="off">
+    {{> csrf}}
+    <div class="card-header"><h2 class="card-title">Account</h2></div>
+    <div class="card-body grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div><label class="label">Full name</label><input class="input" name="fullName" required maxlength="150" value="{{account.fullName}}" /></div>
+      <div><label class="label">Username</label>{{#if isNew}}<input class="input" name="username" required pattern="[A-Za-z0-9._\-]{3,60}" maxlength="60" />{{else}}<input class="input" value="{{account.username}}" disabled />{{/if}}</div>
+      <div><label class="label">Email</label><input class="input" name="email" type="email" required maxlength="190" value="{{account.email}}" /></div>
+      <div><label class="label">Role</label><select class="input" name="roleId">{{#each roles}}<option value="{{id}}" {{selected id ../account.roleId}}>{{name}}</option>{{/each}}</select></div>
+      {{#if isNew}}
+      <div class="sm:col-span-2"><label class="label">Password</label><input class="input" name="password" type="password" required minlength="10" autocomplete="new-password" />
+        <p class="help">10+ characters with uppercase, lowercase and a number.</p></div>
+      {{/if}}
+    </div>
+    <div class="flex justify-end gap-2 border-t border-slate-100 px-5 py-3"><a class="btn-secondary" href="/users">Cancel</a><button class="btn-primary" type="submit">{{#if isNew}}Create{{else}}Save{{/if}}</button></div>
+  </form>
+  {{#unless isNew}}
+  <form method="POST" action="/users/{{account.id}}/password" class="card h-fit" autocomplete="off" data-confirm="Reset the password for {{account.fullName}}?">
+    {{> csrf}}
+    <div class="card-header"><h2 class="card-title">Reset password</h2></div>
+    <div class="card-body space-y-3">
+      <input class="input" name="password" type="password" required minlength="10" autocomplete="new-password" placeholder="New password" aria-label="New password" />
+      <button class="btn-secondary w-full" type="submit">Reset password</button>
+    </div>
+  </form>
+  {{/unless}}
+</div>
+{{> footer}}

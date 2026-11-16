@@ -1,0 +1,51 @@
+{{> head}}
+<div class="page-head no-print">
+  <div>
+    <a href="/reports" class="text-xs text-slate-500 hover:text-slate-900">← Audit Reports</a>
+    <h1 class="page-title mt-1">{{report.name}}</h1>
+  </div>
+  <div class="actions">
+    <button type="button" class="btn-secondary" data-print>Print</button>
+    {{#if canExport}}<a class="btn-primary" href="/reports/{{report.code}}/export?{{exportQuery}}">Export CSV</a>{{/if}}
+  </div>
+</div>
+
+<form method="GET" action="/reports/{{report.code}}" class="card no-print">
+  <div class="grid grid-cols-2 gap-3 p-4 md:grid-cols-4 xl:grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_auto]">
+    <input class="input" type="date" name="from" value="{{report.filters.from}}" aria-label="From" />
+    <input class="input" type="date" name="to" value="{{report.filters.to}}" aria-label="To" />
+    <input class="input" name="username" value="{{report.filters.username}}" placeholder="User" />
+    <select class="input" name="sourceSystemId" aria-label="System"><option value="">All systems</option>{{#each sources}}<option value="{{id}}" {{selected id ../report.filters.sourceSystemId}}>{{name}}</option>{{/each}}</select>
+    <select class="input" name="actionType" aria-label="Action"><option value="">All actions</option>{{#each eventTypes}}<option value="{{code}}" {{selected code ../report.filters.actionType}}>{{name}}</option>{{/each}}</select>
+    <select class="input" name="severity" aria-label="Severity"><option value="">All severities</option>{{#each severities}}<option value="{{this}}" {{selected this ../report.filters.severity}}>{{statusText this}}</option>{{/each}}</select>
+    <button class="btn-primary" type="submit">Apply</button>
+  </div>
+</form>
+
+<article class="card">
+  <header class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
+    <div>
+      <div class="print-only mb-1 text-xs font-medium text-emerald-700">MediSentinel</div>
+      <h2 class="text-lg font-semibold text-slate-900">{{report.name}}</h2>
+      <p class="text-sm text-slate-500">{{dateOnly report.period.from}} – {{dateOnly report.period.to}}</p>
+    </div>
+    <div class="text-right text-xs text-slate-400">Generated {{date report.generatedAt}}<br />by {{generatedBy}}</div>
+  </header>
+  <section class="grid grid-cols-2 divide-x divide-slate-100 border-b border-slate-100 sm:grid-cols-3 lg:grid-cols-5">
+    {{#each report.summary}}<div class="px-5 py-4"><div class="stat-label">{{label}}</div><div class="mt-1 text-xl font-semibold text-slate-900">{{number value}}</div></div>{{/each}}
+  </section>
+  {{#if report.rows.length}}
+  <div class="table-wrap"><table class="table">
+    <thead><tr>{{#each report.columns}}<th>{{label}}</th>{{/each}}</tr></thead>
+    <tbody>
+      {{#each report.rows}}
+      <tr>{{#each @root.report.columns}}<td class="{{#if (eq key 'description')}}max-w-xs text-xs text-slate-500{{/if}}">{{#if (and @first ../link)}}<a class="link font-normal" href="{{../link}}">{{cell ../this key}}</a>{{else}}{{#if (isStatus (cell ../this key))}}{{badge (cell ../this key)}}{{else}}{{cell ../this key}}{{/if}}{{/if}}</td>{{/each}}</tr>
+      {{/each}}
+    </tbody>
+  </table></div>
+  {{#if report.truncated}}<p class="px-6 py-3 text-xs text-amber-600">Showing the first {{report.rows.length}} rows. Export for the full report.</p>{{/if}}
+  {{else}}
+  <div class="empty">No records for this period</div>
+  {{/if}}
+</article>
+{{> footer}}

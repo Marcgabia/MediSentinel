@@ -1,0 +1,33 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/investigations" class="text-xs text-slate-500 hover:text-slate-900">← Investigations</a>
+    <h1 class="page-title mt-1">New case</h1>
+    {{#if alert}}<p class="page-sub">From alert {{alert.alertCode}} · its events will be attached</p>{{/if}}
+  </div>
+</div>
+<form method="POST" action="/investigations" class="card max-w-3xl">
+  {{> csrf}}
+  {{#if alert}}<input type="hidden" name="alertId" value="{{alert.id}}" />{{/if}}
+  {{#each events}}<input type="hidden" name="auditLogIds" value="{{id}}" />{{/each}}
+  <div class="card-body grid grid-cols-1 gap-4 md:grid-cols-3">
+    <div class="md:col-span-3"><label class="label" for="title">Title</label><input class="input" id="title" name="title" maxlength="200" required value="{{prefill.title}}" /></div>
+    <div class="md:col-span-3"><label class="label" for="description">Description</label><textarea class="input" id="description" name="description" rows="4" required>{{prefill.description}}</textarea></div>
+    <div><label class="label">Severity</label><select class="input" name="severity">{{#each severities}}<option value="{{this}}" {{selected this ../prefill.severity}}>{{statusText this}}</option>{{/each}}</select></div>
+    <div><label class="label">System</label><select class="input" name="sourceSystemId"><option value="">—</option>{{#each sources}}<option value="{{id}}" {{selected id ../prefill.sourceSystemId}}>{{name}}</option>{{/each}}</select></div>
+    <div><label class="label">Investigator</label><select class="input" name="assignedToUserId"><option value="">Unassigned</option>{{#each investigators}}<option value="{{id}}" {{selected id ../prefill.assignedToUserId}}>{{fullName}}</option>{{/each}}</select></div>
+  </div>
+  {{#if events.length}}
+  <div class="divider">
+    <div class="px-5 pt-4 text-xs font-medium text-slate-500">Attached events</div>
+    <table class="table"><tbody>
+      {{#each events}}<tr><td class="text-slate-500">{{date occurredAt}}</td><td><a class="link font-normal" href="/audit/{{id}}">{{action actionType}}</a></td><td>{{actorUsername}}</td><td class="text-slate-500">{{sourceSystemName}}</td></tr>{{/each}}
+    </tbody></table>
+  </div>
+  {{/if}}
+  <div class="flex justify-end gap-2 border-t border-slate-100 px-5 py-3">
+    <a class="btn-secondary" href="/investigations">Cancel</a>
+    <button class="btn-primary" type="submit">Create case</button>
+  </div>
+</form>
+{{> footer}}

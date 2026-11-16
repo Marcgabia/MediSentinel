@@ -1,0 +1,46 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/integrations" class="text-xs text-slate-500 hover:text-slate-900">← System Integrations</a>
+    <h1 class="page-title mt-1">API Logs</h1>
+    <p class="page-sub">Every request, accepted or rejected</p>
+  </div>
+</div>
+
+<form method="GET" action="/integrations/logs" class="card no-print">
+  <div class="grid grid-cols-1 gap-3 p-4 md:grid-cols-3 xl:grid-cols-[1fr_1fr_1fr_auto_auto_auto]">
+    <select class="input" name="sourceSystemId" aria-label="System">
+      <option value="">All systems</option>
+      <option value="unknown" {{selected "unknown" filters.sourceSystemId}}>Unknown caller</option>
+      {{#each sources}}<option value="{{id}}" {{selected id ../filters.sourceSystemId}}>{{name}}</option>{{/each}}
+    </select>
+    <select class="input" name="outcome" aria-label="Result">
+      <option value="">All results</option>
+      {{#each outcomes}}<option value="{{this}}" {{selected this ../filters.outcome}}>{{statusText this}}</option>{{/each}}
+    </select>
+    <input class="input mono" name="eventId" value="{{filters.eventId}}" placeholder="Event ID" />
+    <input class="input" type="date" name="from" value="{{filters.from}}" aria-label="From" />
+    <input class="input" type="date" name="to" value="{{filters.to}}" aria-label="To" />
+    <button class="btn-primary" type="submit">Filter</button>
+  </div>
+</form>
+
+<div class="card">
+  {{#if logs.length}}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Time</th><th>System</th><th>Request</th><th>Result</th><th>Event</th><th>Delay</th><th>Error</th></tr></thead>
+    <tbody>{{#each logs}}
+      <tr>
+        <td class="whitespace-nowrap text-slate-500">{{dateTime createdAt}}</td>
+        <td>{{#if sourceSystem}}<a class="link font-normal" href="/integrations/{{sourceSystem.id}}">{{sourceSystem.name}}</a>{{else}}<span class="text-slate-400">Unknown</span>{{/if}}<div class="mono text-slate-400">{{default ipAddress ""}}</div></td>
+        <td class="mono text-slate-600">{{method}} {{endpoint}}{{#if (gt deliveryAttempt 1)}}<div class="text-amber-600">retry #{{deliveryAttempt}}</div>{{/if}}</td>
+        <td>{{badge outcome}} <span class="mono text-slate-400">{{httpStatus}}</span></td>
+        <td>{{#if auditLogId}}<a class="link font-normal" href="/audit/{{auditLogId}}">{{action actionCode}}</a>{{else}}{{#if actionCode}}{{action actionCode}}{{else}}—{{/if}}{{/if}}</td>
+        <td class="whitespace-nowrap text-slate-500">{{duration deliveryDelayMs}}</td>
+        <td class="max-w-xs text-xs">{{#if errorCode}}<div class="mono font-medium text-slate-700">{{errorCode}}</div>{{#each errorDetails}}<div class="text-slate-500">{{#if field}}{{field}}: {{/if}}{{message}}</div>{{/each}}{{/if}}</td>
+      </tr>{{/each}}</tbody>
+  </table></div>
+  {{> pagination}}
+  {{else}}<div class="empty">No requests found</div>{{/if}}
+</div>
+{{> footer}}

@@ -1,0 +1,121 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/audit" class="text-xs text-slate-500 hover:text-slate-900">← Audit Trail</a>
+    <h1 class="page-title mt-1">{{action log.actionType}}</h1>
+    <p class="page-sub">{{log.description}}</p>
+  </div>
+  <div class="actions no-print">
+    {{badge log.outcome}} {{badge log.severity}}
+    <button type="button" class="btn-secondary" data-print>Print</button>
+    {{#if (and transactionRef canViewTransactions)}}<a href="/audit/transactions/{{encode transactionRef}}?sourceSystemId={{log.sourceSystemId}}" class="btn-secondary">Transaction timeline</a>{{/if}}
+    {{#if canInvestigate}}<a href="/investigations/new?auditLogId={{log.id}}" class="btn-primary">Investigate</a>{{/if}}
+  </div>
+</div>
+
+<div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+  <div class="card xl:col-span-2">
+    <div class="card-header"><h2 class="card-title">Details</h2><span class="mono text-slate-400">#{{log.id}}</span></div>
+    <div class="card-body">
+      <dl class="kv">
+        <dt>Event ID</dt><dd class="mono">{{log.eventId}}</dd>
+        <dt>System</dt><dd>{{log.sourceSystemName}} <span class="text-slate-400">· {{log.sourceModule}}</span></dd>
+        <dt>User</dt><dd>{{#if log.actorUsername}}<a class="link" href="/user-activity/profile?sourceSystemId={{log.sourceSystemId}}&user={{encode (default log.actorUserId log.actorUsername)}}">{{log.actorUsername}}</a>{{else}}—{{/if}}{{#if log.actorUserId}} <span class="mono text-slate-400">{{log.actorUserId}}</span>{{/if}}</dd>
+        <dt>Role</dt><dd>{{default log.actorRole "—"}}</dd>
+        <dt>Record</dt><dd>{{#if log.entityType}}{{log.entityType}} <a class="link mono" href="/audit?entityId={{encode log.entityId}}">{{log.entityId}}</a>{{else}}—{{/if}}</dd>
+        <dt>Occurred</dt><dd>{{dateTime log.occurredAt}}</dd>
+        <dt>Received</dt><dd>{{dateTime log.receivedAt}} <span class="text-slate-400">· {{duration deliveryDelayMs}} later</span></dd>
+        <dt>IP address</dt><dd class="mono">{{default log.ipAddress "—"}}</dd>
+        <dt>Device</dt><dd class="text-xs">{{default log.userAgent "—"}}</dd>
+        <dt>Correlation ID</dt><dd class="mono">{{#if log.correlationId}}<a class="link" href="/audit?correlationId={{encode log.correlationId}}">{{log.correlationId}}</a>{{else}}—{{/if}}</dd>
+      </dl>
+      {{#if trace}}
+      <div class="divider mt-4 pt-4">
+        <div class="mb-2 text-xs font-medium text-slate-500">Traceability</div>
+        <dl class="kv">
+          {{#if trace.branchId}}<dt>Branch</dt><dd><span class="mono">{{trace.branchId}}</span>{{#if trace.branchName}} <span class="text-slate-400">· {{trace.branchName}}</span>{{/if}}</dd>{{/if}}
+          {{#if trace.reason}}<dt>Reason</dt><dd>{{trace.reason}}</dd>{{/if}}
+          {{#if trace.authorization}}
+          <dt>Authorization</dt><dd>{{badge trace.authorization.outcome}}{{#if trace.authorization.method}} <span class="text-slate-400">· {{humanize trace.authorization.method}}</span>{{/if}}</dd>
+          {{#if trace.authorization.requestedBy}}<dt>Requested by</dt><dd>{{who trace.authorization.requestedBy}}</dd>{{/if}}
+          {{#if trace.authorization.authorizedBy}}<dt>Authorized by</dt><dd>{{who trace.authorization.authorizedBy}}</dd>{{/if}}
+          {{#if trace.authorization.reference}}<dt>Verification ref.</dt><dd class="mono">{{trace.authorization.reference}}</dd>{{/if}}
+          {{/if}}
+          {{#if trace.references.transactionId}}<dt>Transaction</dt><dd class="mono">{{#if canViewTransactions}}<a class="link" href="/audit/transactions/{{encode trace.references.transactionId}}?sourceSystemId={{log.sourceSystemId}}">{{trace.references.transactionId}}</a>{{else}}{{trace.references.transactionId}}{{/if}}</dd>{{/if}}
+          {{#if trace.references.customerId}}<dt>Customer ref.</dt><dd class="mono">{{trace.references.customerId}}</dd>{{/if}}
+          {{#if trace.references.productId}}<dt>Product ref.</dt><dd class="mono">{{trace.references.productId}}{{#if trace.references.productCode}} · {{trace.references.productCode}}{{/if}}</dd>{{/if}}
+          {{#if trace.report}}<dt>Report</dt><dd>{{default trace.report.reportType "—"}}{{#if trace.report.dateFrom}} · {{trace.report.dateFrom}} → {{trace.report.dateTo}}{{/if}}{{#if trace.report.branchFilter}} · branch {{trace.report.branchFilter}}{{/if}}{{#if trace.report.exportFormat}} · {{trace.report.exportFormat}}{{/if}}</dd>{{/if}}
+          {{#if trace.lookup}}<dt>Lookup result</dt><dd>{{badge trace.lookup.resultStatus}}{{#if (isSet trace.lookup.resultCount)}} <span class="text-slate-400">· {{trace.lookup.resultCount}} result(s)</span>{{/if}}</dd>{{/if}}
+          {{#if trace.identity.sharedUserId}}<dt>Shared user ID</dt><dd class="mono"><a class="link" href="/audit/cross-system?person={{encode trace.identity.sharedUserId}}">{{trace.identity.sharedUserId}}</a></dd>{{/if}}
+        </dl>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+
+  <div class="space-y-5">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Integrity</h2>{{#if integrity.valid}}{{badge "PASS" "Verified"}}{{else}}{{badge "FAIL" "Failed"}}{{/if}}</div>
+      <div class="card-body space-y-3 text-sm">
+        {{#if integrity.valid}}
+          <p class="text-slate-600">Signature and chain link match. This record has not been changed.</p>
+        {{else}}
+          <ul class="space-y-1 text-red-700">{{#each integrity.issues}}<li><span class="mono font-semibold">{{code}}</span> — {{message}}</li>{{/each}}</ul>
+        {{/if}}
+        <div class="space-y-1 text-xs">
+          <div class="text-slate-500">Signature</div>
+          <div class="mono break-all text-slate-700">{{log.integrityHash}}</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Linked</h2></div>
+      <ul class="divide-y divide-slate-100 text-sm">
+        {{#each alerts}}<li class="flex items-center justify-between gap-2 px-5 py-2.5"><a class="link" href="/alerts/{{id}}">{{title}}</a>{{badge status}}</li>{{/each}}
+        {{#each cases}}<li class="flex items-center justify-between gap-2 px-5 py-2.5"><a class="link" href="/investigations/{{id}}">{{caseNumber}}</a>{{badge status}}</li>{{/each}}
+        {{#unless (or alerts.length cases.length)}}<li class="empty py-6">No alerts or investigations</li>{{/unless}}
+      </ul>
+    </div>
+  </div>
+</div>
+
+{{#if hasChanges}}
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Changes</h2>
+    <label class="flex items-center gap-2 text-xs text-slate-600 no-print"><input type="checkbox" data-diff-filter class="check" /> Changed fields only</label>
+  </div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th class="w-1/4">Field</th><th>Before</th><th>After</th><th></th></tr></thead>
+      <tbody>
+        {{#each diffRows}}
+        <tr data-diff-row="{{change}}">
+          <td class="font-medium text-slate-900">{{label}}</td>
+          <td class="mono break-all {{#if isChanged}}text-red-600 line-through decoration-red-200{{else}}text-slate-500{{/if}}">{{default before "—"}}</td>
+          <td class="mono break-all {{#if isChanged}}font-semibold text-emerald-700{{else}}text-slate-500{{/if}}">{{default after "—"}}</td>
+          <td class="text-right">{{#if isChanged}}{{badge change}}{{/if}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>
+{{/if}}
+
+{{#if correlated.length}}
+<div class="card">
+  <div class="card-header"><h2 class="card-title">Related events</h2><span class="mono text-xs text-slate-400">{{log.correlationId}}</span></div>
+  <div class="table-wrap"><table class="table">
+    <tbody>{{#each correlated}}<tr><td class="whitespace-nowrap text-slate-500">{{date occurredAt}}</td><td><a class="link" href="/audit/{{id}}">{{action actionType}}</a></td><td class="text-slate-500">{{sourceSystemName}}</td><td class="text-right">{{badge outcome}}</td></tr>{{/each}}</tbody>
+  </table></div>
+</div>
+{{/if}}
+
+{{#if log.metadata}}
+<div class="card">
+  <div class="card-header"><h2 class="card-title">Extra data</h2></div>
+  <pre class="card-body overflow-x-auto bg-slate-50/60 mono text-slate-600">{{json log.metadata}}</pre>
+</div>
+{{/if}}
+{{> footer}}

@@ -1,0 +1,8 @@
+node_modules/
+.env
+.backup/
+*.log
+*.jsonl
+*.jsonl.rejected
+coverage/
+.demo-credentials.json

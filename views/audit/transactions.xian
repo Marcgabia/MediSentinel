@@ -1,0 +1,44 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Transaction Audit Timeline</h1>
+    <p class="page-sub">Every audit event recorded for one transaction, grouped by transaction reference and correlation ID</p>
+  </div>
+</div>
+{{> audit-tabs}}
+
+<form method="GET" action="/audit/transactions" class="card no-print">
+  <div class="grid grid-cols-1 gap-3 p-4 md:grid-cols-[2fr_1fr_auto]">
+    <input class="input mono" name="ref" placeholder="Exact transaction ID, e.g. SALE-00025" aria-label="Transaction ID" />
+    <select class="input" name="sourceSystemId" aria-label="System">
+      <option value="">All systems</option>
+      {{#each options.sources}}<option value="{{id}}" {{selected id ../filters.sourceSystemId}}>{{name}}</option>{{/each}}
+    </select>
+    <button class="btn-primary" type="submit">Open timeline</button>
+  </div>
+</form>
+
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Recently active transactions</h2>
+    <form method="GET" action="/audit/transactions" class="flex gap-2 no-print">
+      <input class="input mono w-48" name="q" value="{{filters.q}}" placeholder="Filter references" aria-label="Filter references" />
+      {{#if filters.sourceSystemId}}<input type="hidden" name="sourceSystemId" value="{{filters.sourceSystemId}}" />{{/if}}
+      <button class="btn-ghost btn-sm" type="submit">Filter</button>
+    </form>
+  </div>
+  {{#if recent.length}}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Transaction</th><th>System</th><th>Events</th><th>First event</th><th>Last event</th><th></th></tr></thead>
+    <tbody>{{#each recent}}<tr>
+      <td><a class="link mono" href="/audit/transactions/{{encode ref}}?sourceSystemId={{sourceSystemId}}">{{ref}}</a></td>
+      <td class="text-slate-600">{{sourceSystemName}}</td>
+      <td>{{number events}}</td>
+      <td class="whitespace-nowrap text-slate-500">{{date firstAt}}</td>
+      <td class="whitespace-nowrap text-slate-500">{{date lastAt}}</td>
+      <td class="text-right">{{#if (gt voids 0)}}{{badge "voided"}}{{/if}}</td>
+    </tr>{{/each}}</tbody>
+  </table></div>
+  {{else}}<div class="empty">No transaction events have been received{{#if filters.q}} matching “{{filters.q}}”{{/if}}</div>{{/if}}
+</div>
+{{> footer}}

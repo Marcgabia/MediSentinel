@@ -1,0 +1,84 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Cross-System Activity</h1>
+    <p class="page-sub">{{number pagination.total}} event(s) across integrated systems · linked by correlation ID, transaction reference and verified identities</p>
+  </div>
+  <div class="actions">{{#if canManageIdentities}}<a href="/audit/identities" class="btn-secondary">Identity mappings</a>{{/if}}</div>
+</div>
+{{> audit-tabs}}
+
+<form method="GET" action="/audit/cross-system" class="card no-print">
+  <div class="grid grid-cols-1 gap-3 p-4 md:grid-cols-3 xl:grid-cols-6">
+    <div><label class="label">Person (verified identity)</label>
+      <input class="input mono" name="person" value="{{filters.person}}" list="person-keys" placeholder="Shared ID or mapped person" />
+      <datalist id="person-keys">{{#each personKeys}}<option value="{{personKey}}">{{default displayName personKey}}</option>{{/each}}</datalist></div>
+    <div><label class="label">System</label><select class="input" name="sourceSystemId"><option value="">All systems</option>{{#each options.sources}}<option value="{{id}}" {{selected id ../filters.sourceSystemId}}>{{name}}</option>{{/each}}</select></div>
+    <div><label class="label">User ID (on that system)</label><input class="input mono" name="userId" value="{{filters.userId}}" /></div>
+    <div><label class="label">Username (exact)</label><input class="input" name="username" value="{{filters.username}}" /></div>
+    <div><label class="label">Transaction reference</label><input class="input mono" name="transactionRef" value="{{filters.transactionRef}}" /></div>
+    <div><label class="label">Branch</label><select class="input" name="branchId"><option value="">All</option>{{#each options.branches}}<option value="{{this}}" {{selected this ../filters.branchId}}>{{this}}</option>{{/each}}</select></div>
+    <div><label class="label">Activity type</label><select class="input" name="activity"><option value="">All</option>
+      <optgroup label="Activity groups">{{#each options.groups}}<option value="{{code}}" {{selected code ../filters.activity}}>{{label}}</option>{{/each}}</optgroup>
+      <optgroup label="Single event">{{#each options.eventTypes}}<option value="{{code}}" {{selected code ../filters.activity}}>{{name}}</option>{{/each}}</optgroup>
+    </select></div>
+    <div><label class="label">Correlation ID</label><input class="input mono" name="correlationId" value="{{filters.correlationId}}" /></div>
+    <div><label class="label">From</label><input class="input" type="date" name="from" value="{{filters.from}}" /></div>
+    <div><label class="label">To</label><input class="input" type="date" name="to" value="{{filters.to}}" /></div>
+    <div class="flex items-end pb-2"><label class="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" name="hideRoutine" value="true" class="check" {{checked filters.hideRoutine}} /> Hide routine access</label></div>
+    <div class="flex items-end gap-2"><button class="btn-primary" type="submit">Search</button>{{#if hasFilters}}<a class="btn-ghost" href="/audit/cross-system">Clear</a>{{/if}}</div>
+  </div>
+</form>
+
+{{#if sharedUsernames.length}}
+<div class="notice border-amber-200 bg-amber-50 text-amber-900">
+  The username{{#if (gt sharedUsernames.length 1)}}s{{/if}} <strong>{{#each sharedUsernames}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</strong> exist on more than one system. They are shown as <strong>separate identities</strong>: matching usernames are never assumed to be the same person. Link accounts only through a verified shared user ID or an identity mapping.
+</div>
+{{/if}}
+
+<div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+  <div class="card xl:col-span-2">
+    <div class="card-header"><h2 class="card-title">Matching identities</h2><span class="text-xs text-slate-400">per system</span></div>
+    {{#if identities.length}}
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>System</th><th>User ID</th><th>Username</th><th>Linked person</th><th>Events</th></tr></thead>
+      <tbody>{{#each identities}}<tr>
+        <td class="text-slate-600">{{sourceSystemName}}</td>
+        <td class="mono">{{#if actorUserId}}<a class="link" href="/audit/cross-system?sourceSystemId={{sourceSystemId}}&userId={{encode actorUserId}}">{{actorUserId}}</a>{{else}}<span class="text-slate-400">—</span>{{/if}}</td>
+        <td>{{default actorUsername "—"}}</td>
+        <td>{{#if mapping}}<a class="link mono" href="/audit/cross-system?person={{encode mapping.personKey}}">{{mapping.personKey}}</a>{{else}}{{#if sharedUserId}}<a class="link mono" href="/audit/cross-system?person={{encode sharedUserId}}">{{sharedUserId}}</a> <span class="text-xs text-slate-400">shared ID</span>{{else}}<span class="text-xs text-slate-400">not linked</span>{{#if (and @root.canManageIdentities actorUserId)}} · <a class="link text-xs" href="/audit/identities?sourceSystemId={{sourceSystemId}}&actorUserId={{encode actorUserId}}">link</a>{{/if}}{{/if}}{{/if}}</td>
+        <td>{{number events}}</td>
+      </tr>{{/each}}</tbody>
+    </table></div>
+    {{else}}<div class="empty">No identities match</div>{{/if}}
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Correlated across systems</h2></div>
+    {{#if crossCorrelations.length}}
+    <ul class="divide-y divide-slate-100 text-sm">{{#each crossCorrelations}}<li class="px-5 py-2.5">
+      <a class="link mono" href="/audit/cross-system?correlationId={{encode correlationId}}">{{correlationId}}</a>
+      <div class="text-xs text-slate-500">{{events}} events · {{sourceNames}}</div>
+    </li>{{/each}}</ul>
+    {{else}}<div class="empty">No correlation ID on this page spans more than one system</div>{{/if}}
+  </div>
+</div>
+
+<div class="card">
+  {{#if rows.length}}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Time</th><th>System</th><th>Event</th><th>User</th><th>Branch</th><th>Reference</th><th>Correlation</th><th>Outcome</th></tr></thead>
+    <tbody>{{#each rows}}<tr>
+      <td class="whitespace-nowrap text-slate-500">{{dateTime occurredAt}}</td>
+      <td><div>{{sourceSystemName}}</div><div class="cell-sub">{{sourceModule}}</div></td>
+      <td><a href="/audit/{{id}}" class="cell-main hover:text-emerald-700">{{action actionType}}</a><div class="cell-sub mono">{{eventId}}</div></td>
+      <td><div>{{default actorUsername (default actorUserId "—")}}</div><div class="cell-sub mono">{{actorUserId}}{{#if sharedUserId}} · {{sharedUserId}}{{/if}}</div></td>
+      <td class="mono text-xs">{{default branchId "—"}}</td>
+      <td class="mono text-xs">{{#if transactionRef}}{{#if (can "transactions.view")}}<a class="link" href="/audit/transactions/{{encode transactionRef}}?sourceSystemId={{sourceSystemId}}">{{transactionRef}}</a>{{else}}{{transactionRef}}{{/if}}{{else}}{{#if entityId}}{{entityType}} {{entityId}}{{else}}—{{/if}}{{/if}}</td>
+      <td class="mono text-xs">{{#if correlationId}}<a class="link" href="/audit/cross-system?correlationId={{encode correlationId}}">{{truncate correlationId 24}}</a>{{else}}—{{/if}}</td>
+      <td>{{badge outcome}}</td>
+    </tr>{{/each}}</tbody>
+  </table></div>
+  {{> pagination}}
+  {{else}}<div class="empty">{{#if hasFilters}}No activity matches these filters{{else}}No activity from connected systems yet{{/if}}</div>{{/if}}
+</div>
+{{> footer}}

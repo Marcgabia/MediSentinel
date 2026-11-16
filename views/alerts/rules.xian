@@ -1,0 +1,40 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/alerts" class="text-xs text-slate-500 hover:text-slate-900">← Suspicious Activities</a>
+    <h1 class="page-title mt-1">Detection Rules</h1>
+    <p class="page-sub">Raise an alert when the count reaches the threshold within the window</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Rule</th><th class="w-28">Threshold</th><th class="w-32">Window (min)</th><th class="w-36">Severity</th><th class="w-20">On</th><th class="w-20"></th></tr></thead>
+      <tbody>
+        {{#each rules}}
+        <tr>
+          <td>
+            <form id="rule-{{id}}" method="POST" action="/alerts/rules/{{id}}">{{> csrf}}</form>
+            <div class="cell-main">{{name}}</div>
+            <div class="cell-sub">{{description}}</div>
+            {{#if (eq ruleType "OFF_HOURS")}}
+            <div class="mt-2 flex items-center gap-2 text-xs text-slate-500">Business hours
+              <input form="rule-{{id}}" class="input w-16 py-1" type="number" min="0" max="23" name="startHour" value="{{params.startHour}}" aria-label="Start hour" /> to
+              <input form="rule-{{id}}" class="input w-16 py-1" type="number" min="0" max="23" name="endHour" value="{{params.endHour}}" aria-label="End hour" />
+              <input form="rule-{{id}}" class="input w-36 py-1" name="timezone" value="{{params.timezone}}" aria-label="Timezone" />
+            </div>
+            {{/if}}
+          </td>
+          <td><input form="rule-{{id}}" class="input" type="number" min="1" name="threshold" value="{{threshold}}" required aria-label="Threshold" /></td>
+          <td><input form="rule-{{id}}" class="input" type="number" min="1" max="10080" name="windowMinutes" value="{{windowMinutes}}" required aria-label="Window" /></td>
+          <td><select form="rule-{{id}}" class="input" name="severity" aria-label="Severity">{{#each @root.severities}}<option value="{{this}}" {{selected this ../severity}}>{{statusText this}}</option>{{/each}}</select></td>
+          <td><input form="rule-{{id}}" type="checkbox" name="isEnabled" {{checked isEnabled}} class="check" aria-label="Enabled" /></td>
+          <td class="text-right"><button form="rule-{{id}}" class="btn-secondary btn-sm" type="submit">Save</button></td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>
+{{> footer}}

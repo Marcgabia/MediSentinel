@@ -1,0 +1,46 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Quality Assurance</h1>
+    <p class="page-sub">{{#if latest}}Last run {{ago latest.completedAt}} · {{number latest.recordsVerified}} records verified{{else}}No verification run yet{{/if}}</p>
+  </div>
+  <div class="actions">
+    <a href="/qa/runs" class="btn-secondary">History</a>
+    <a href="/qa/coverage" class="btn-secondary">Coverage</a>
+    {{#if canRun}}<form method="POST" action="/qa/run">{{> csrf}}<button class="btn-primary" type="submit">Run verification</button></form>{{/if}}
+  </div>
+</div>
+
+<section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <div class="stat"><div class="stat-label">Overall</div><div class="mt-2">{{#if latest}}{{badge latest.overallResult}}{{else}}{{badge "NOT_TESTED"}}{{/if}}</div></div>
+  <div class="stat"><div class="stat-label">Event coverage</div><div class="stat-value">{{#if (isSet coveragePercent)}}{{coveragePercent}}%{{else}}—{{/if}}</div></div>
+  <a href="/qa/findings" class="stat"><div class="stat-label">Open findings</div><div class="stat-value {{#if unresolved}}text-red-600{{/if}}">{{unresolved}}</div>{{#if (or openFindings.CRITICAL openFindings.HIGH)}}<div class="stat-sub">{{openFindings.CRITICAL}} critical · {{openFindings.HIGH}} high</div>{{/if}}</a>
+  <div class="stat"><div class="stat-label">Checks (all runs)</div><div class="stat-value">{{number totals.checks}}</div><div class="stat-sub">{{number totals.passed}} passed · {{number totals.failed}} failed · {{number totals.warnings}} warnings</div></div>
+</section>
+
+<section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  {{#each categories}}
+  <div class="card flex items-center justify-between gap-3 p-4"><span class="text-sm text-slate-700">{{label}}</span>{{badge status}}</div>
+  {{/each}}
+</section>
+
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Needs attention</h2>
+    {{#if latest}}<div class="flex items-center gap-3 text-xs text-slate-500"><span>{{latest.passedChecks}} passed · {{latest.notTestedChecks}} not tested</span><a href="/qa/runs/{{latest.id}}" class="card-link">Full report</a></div>{{/if}}
+  </div>
+  {{#if latestResults.length}}
+  {{#if (or latest.failedChecks latest.warningChecks)}}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Check</th><th>System</th><th>Result</th><th>Summary</th></tr></thead>
+    <tbody>{{#each latestResults}}{{#if (or (eq status "FAIL") (eq status "WARNING"))}}<tr>
+      <td class="cell-main whitespace-nowrap">{{checkName}}</td>
+      <td class="text-slate-600">{{default sourceSystem.name "All"}}</td>
+      <td>{{badge status}}</td>
+      <td class="text-xs text-slate-500">{{summary}}</td>
+    </tr>{{/if}}{{/each}}</tbody>
+  </table></div>
+  {{else}}<div class="empty">All checks passed</div>{{/if}}
+  {{else}}<div class="empty">Run a verification to see results</div>{{/if}}
+</div>
+{{> footer}}

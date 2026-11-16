@@ -1,0 +1,92 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/alerts" class="text-xs text-slate-500 hover:text-slate-900">← Suspicious Activities</a>
+    <h1 class="page-title mt-1">{{alert.title}}</h1>
+    <p class="page-sub">{{alert.alertCode}} · {{alert.occurrenceCount}} events</p>
+  </div>
+  <div class="actions">
+    {{badge alert.severity}} {{badge alert.status}}
+    {{#if alert.cases.length}}{{#each alert.cases}}<a href="/investigations/{{id}}" class="btn-primary">View {{caseNumber}}</a>{{/each}}{{else}}{{#if (and canInvestigate isActive)}}<a href="/investigations/new?alertId={{alert.id}}" class="btn-primary">Open investigation</a>{{/if}}{{/if}}
+  </div>
+</div>
+
+<div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+  <div class="space-y-5 xl:col-span-2">
+    <div class="card">
+      <div class="card-body space-y-4">
+        <p class="text-sm text-slate-700">{{alert.description}}</p>
+        <dl class="kv">
+          <dt>System</dt><dd>{{default alert.sourceSystem.name "—"}}</dd>
+          <dt>User</dt><dd>{{#if (and alert.sourceSystemId alert.actorUsername)}}<a class="link" href="/user-activity/profile?sourceSystemId={{alert.sourceSystemId}}&user={{encode (default alert.actorUserId alert.actorUsername)}}">{{alert.actorUsername}}</a>{{else}}{{default alert.actorUsername "—"}}{{/if}}</dd>
+          <dt>Rule</dt><dd>{{default alert.rule.name alert.alertType}}{{#if alert.details.windowMinutes}} <span class="text-slate-400">· {{alert.details.threshold}}+ in {{alert.details.windowMinutes}} min</span>{{/if}}</dd>
+          <dt>First detected</dt><dd>{{date alert.firstDetectedAt}}</dd>
+          <dt>Last detected</dt><dd>{{date alert.lastDetectedAt}}</dd>
+          <dt>Assigned to</dt><dd>{{default alert.assignedTo.fullName "—"}}</dd>
+          {{#if alert.resolutionNotes}}<dt>Resolution</dt><dd class="whitespace-pre-line">{{alert.resolutionNotes}}</dd>{{/if}}
+        </dl>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Matching events</h2></div>
+      {{#if alert.relatedEvents.length}}
+      <div class="table-wrap"><table class="table">
+        <tbody>{{#each alert.relatedEvents}}<tr>
+          <td class="whitespace-nowrap text-slate-500">{{date occurredAt}}</td>
+          <td><a class="link font-normal" href="/audit/{{id}}">{{action actionType}}</a><div class="cell-sub">{{entityId}}</div></td>
+          <td>{{actorUsername}}</td>
+          <td class="text-right">{{badge outcome}}</td>
+        </tr>{{/each}}</tbody>
+      </table></div>
+      {{else}}<div class="empty">{{#if (eq alert.alertType "API_AUTH_FAILURE")}}Based on rejected API requests. <a class="link" href="/integrations/logs?outcome=REJECTED_AUTH">View API logs</a>{{else}}No linked events{{/if}}</div>{{/if}}
+    </div>
+  </div>
+
+  <div class="space-y-5">
+    {{#if canManage}}
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Actions</h2></div>
+      <div class="card-body space-y-4">
+        {{#if isActive}}
+          {{#if (eq alert.status "OPEN")}}
+          <form method="POST" action="/alerts/{{alert.id}}/action">{{> csrf}}<input type="hidden" name="action" value="acknowledge" /><button class="btn-secondary w-full" type="submit">Acknowledge</button></form>
+          {{/if}}
+          <form method="POST" action="/alerts/{{alert.id}}/action" class="flex gap-2">{{> csrf}}<input type="hidden" name="action" value="assign" />
+            <select class="input" name="assigneeId" required aria-label="Assign to">{{#each managers}}<option value="{{id}}" {{selected id ../alert.assignedToUserId}}>{{fullName}}</option>{{/each}}</select>
+            <button class="btn-secondary" type="submit">Assign</button>
+          </form>
+          <form method="POST" action="/alerts/{{alert.id}}/action" class="space-y-2">{{> csrf}}
+            <textarea class="input" name="note" rows="3" required placeholder="Outcome of the review"></textarea>
+            <div class="grid grid-cols-2 gap-2">
+              <button class="btn-success" type="submit" name="action" value="resolve">Resolve</button>
+              <button class="btn-secondary" type="submit" name="action" value="dismiss" data-confirm="Dismiss as false positive?">Dismiss</button>
+            </div>
+          </form>
+        {{else}}
+          <form method="POST" action="/alerts/{{alert.id}}/action">{{> csrf}}<input type="hidden" name="action" value="reopen" /><button class="btn-secondary w-full" type="submit" data-confirm="Reopen this alert?">Reopen</button></form>
+        {{/if}}
+      </div>
+    </div>
+    {{/if}}
+
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">History</h2></div>
+      {{#if canManage}}
+      <form method="POST" action="/alerts/{{alert.id}}/action" class="flex gap-2 border-b border-slate-100 px-5 py-3">{{> csrf}}<input type="hidden" name="action" value="note" />
+        <input class="input" name="note" required placeholder="Add a note" />
+        <button class="btn-secondary" type="submit">Add</button>
+      </form>
+      {{/if}}
+      <ol class="space-y-4 px-5 py-4 text-sm">
+        {{#each alert.activities}}
+        <li class="relative border-l-2 border-slate-200 pl-4">
+          <div class="flex flex-wrap items-center gap-x-2 text-xs text-slate-500"><span class="font-medium text-slate-900">{{humanize activityType}}</span><span>{{date createdAt}}</span><span>· {{default user.fullName "System"}}</span></div>
+          {{#if note}}<p class="mt-1 whitespace-pre-line text-slate-600">{{note}}</p>{{/if}}
+        </li>
+        {{/each}}
+      </ol>
+    </div>
+  </div>
+</div>
+{{> footer}}

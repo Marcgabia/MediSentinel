@@ -1,0 +1,12 @@
+{{#if pagination}}
+<div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-3 text-xs text-slate-500">
+  <span>{{number pagination.from}}–{{number pagination.to}} of {{number pagination.total}}</span>
+  {{#if (gt pagination.totalPages 1)}}
+  <nav class="flex items-center gap-1" aria-label="Pagination">
+    {{#if pagination.prevUrl}}<a href="{{pagination.prevUrl}}" class="btn-secondary btn-sm">Previous</a>{{/if}}
+    {{#each pagination.pages}}<a href="{{this.url}}" class="btn-sm {{#if this.active}}btn-primary{{else}}btn-ghost{{/if}}">{{this.number}}</a>{{/each}}
+    {{#if pagination.nextUrl}}<a href="{{pagination.nextUrl}}" class="btn-secondary btn-sm">Next</a>{{/if}}
+  </nav>
+  {{/if}}
+</div>
+{{/if}}

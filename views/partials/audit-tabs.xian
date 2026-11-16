@@ -1,0 +1,9 @@
+<nav class="no-print flex flex-wrap gap-1 border-b border-slate-200" aria-label="Audit trail views">
+  <a href="/audit" class="-mb-px border-b-2 px-3 py-2 text-sm {{#if (eq currentPath '/audit')}}border-brand-500 font-semibold text-slate-900{{else}}border-transparent text-slate-500 hover:text-slate-900{{/if}}">All events</a>
+  {{#if (can "transactions.view")}}
+  <a href="/audit/transactions" class="-mb-px border-b-2 px-3 py-2 text-sm {{#if (startsWith currentPath '/audit/transactions')}}border-brand-500 font-semibold text-slate-900{{else}}border-transparent text-slate-500 hover:text-slate-900{{/if}}">Transaction timeline</a>
+  <a href="/audit/voids" class="-mb-px border-b-2 px-3 py-2 text-sm {{#if (startsWith currentPath '/audit/voids')}}border-brand-500 font-semibold text-slate-900{{else}}border-transparent text-slate-500 hover:text-slate-900{{/if}}">Void investigation</a>
+  {{/if}}
+  <a href="/audit/configuration" class="-mb-px border-b-2 px-3 py-2 text-sm {{#if (startsWith currentPath '/audit/configuration')}}border-brand-500 font-semibold text-slate-900{{else}}border-transparent text-slate-500 hover:text-slate-900{{/if}}">Configuration changes</a>
+  <a href="/audit/cross-system" class="-mb-px border-b-2 px-3 py-2 text-sm {{#if (or (startsWith currentPath '/audit/cross-system') (startsWith currentPath '/audit/identities'))}}border-brand-500 font-semibold text-slate-900{{else}}border-transparent text-slate-500 hover:text-slate-900{{/if}}">Cross-system</a>
+</nav>

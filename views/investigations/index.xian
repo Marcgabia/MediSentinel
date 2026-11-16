@@ -1,0 +1,41 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Investigations</h1>
+    <p class="page-sub">{{#if seesAll}}All cases{{else}}Cases assigned to or created by you{{/if}}</p>
+  </div>
+  <div class="actions">{{#if canManage}}<a class="btn-primary" href="/investigations/new">New case</a>{{/if}}</div>
+</div>
+
+<section class="grid grid-cols-2 gap-3 lg:grid-cols-5">
+  <a class="stat" href="/investigations?status=OPEN"><div class="stat-label">Open</div><div class="stat-value">{{default counts.OPEN 0}}</div></a>
+  <a class="stat" href="/investigations?status=UNDER_INVESTIGATION"><div class="stat-label">In progress</div><div class="stat-value">{{default counts.UNDER_INVESTIGATION 0}}</div></a>
+  <a class="stat" href="/investigations?status=PENDING_REVIEW"><div class="stat-label">Pending review</div><div class="stat-value">{{default counts.PENDING_REVIEW 0}}</div></a>
+  <a class="stat" href="/investigations?status=RESOLVED"><div class="stat-label">Resolved</div><div class="stat-value">{{default counts.RESOLVED 0}}</div></a>
+  <a class="stat" href="/investigations?status=CLOSED"><div class="stat-label">Closed</div><div class="stat-value">{{default counts.CLOSED 0}}</div></a>
+</section>
+
+<div class="card">
+  <form method="GET" action="/investigations" class="grid grid-cols-1 gap-3 border-b border-slate-100 p-4 md:grid-cols-3 xl:grid-cols-[2fr_1fr_1fr_1fr_auto]">
+    <input class="input" name="search" value="{{filters.search}}" placeholder="Case ID or title" aria-label="Search" />
+    <select class="input" name="status" data-autosubmit aria-label="Status"><option value="">All statuses</option><option value="active" {{selected "active" filters.status}}>Active</option>{{#each statuses}}<option value="{{this}}" {{selected this ../filters.status}}>{{humanize this}}</option>{{/each}}</select>
+    <select class="input" name="severity" data-autosubmit aria-label="Severity"><option value="">All severities</option>{{#each severities}}<option value="{{this}}" {{selected this ../filters.severity}}>{{statusText this}}</option>{{/each}}</select>
+    <select class="input" name="assignedToUserId" data-autosubmit aria-label="Investigator"><option value="">Anyone</option><option value="me" {{selected "me" filters.assignedToUserId}}>Me</option>{{#each investigators}}<option value="{{id}}" {{selected id ../filters.assignedToUserId}}>{{fullName}}</option>{{/each}}</select>
+    <button class="btn-primary" type="submit">Filter</button>
+  </form>
+  {{#if cases.length}}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Case</th><th>System</th><th>Severity</th><th>Status</th><th>Investigator</th><th>Updated</th></tr></thead>
+    <tbody>{{#each cases}}<tr>
+      <td class="max-w-md"><a class="cell-main hover:text-emerald-700" href="/investigations/{{id}}">{{title}}</a><div class="cell-sub">{{caseNumber}} · {{eventCount}} events</div></td>
+      <td class="text-slate-600">{{default sourceSystem.name "—"}}</td>
+      <td>{{badge severity}}</td>
+      <td>{{badge status}}</td>
+      <td class="text-slate-600">{{default assignedTo.fullName "Unassigned"}}</td>
+      <td class="whitespace-nowrap text-slate-500">{{ago updatedAt}}</td>
+    </tr>{{/each}}</tbody>
+  </table></div>
+  {{> pagination}}
+  {{else}}<div class="empty">No cases</div>{{/if}}
+</div>
+{{> footer}}

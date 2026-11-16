@@ -1,0 +1,107 @@
+{{> head}}
+<div class="page-head">
+  <div><h1 class="page-title">Settings</h1></div>
+</div>
+<nav class="flex flex-wrap gap-1 border-b border-slate-200">
+  {{#if canManage}}
+  <a href="/settings?tab=system" class="-mb-px border-b-2 px-3 py-2 text-sm {{#if (eq tab 'system')}}border-brand-500 font-semibold text-slate-900{{else}}border-transparent text-slate-500 hover:text-slate-900{{/if}}">System</a>
+  <a href="/settings?tab=events" class="-mb-px border-b-2 px-3 py-2 text-sm {{#if (eq tab 'events')}}border-brand-500 font-semibold text-slate-900{{else}}border-transparent text-slate-500 hover:text-slate-900{{/if}}">Event types</a>
+  <a href="/settings?tab=security" class="-mb-px border-b-2 px-3 py-2 text-sm {{#if (eq tab 'security')}}border-brand-500 font-semibold text-slate-900{{else}}border-transparent text-slate-500 hover:text-slate-900{{/if}}">Security keys</a>
+  {{/if}}
+  <a href="/settings?tab=appearance" class="-mb-px border-b-2 px-3 py-2 text-sm {{#if (eq tab 'appearance')}}border-brand-500 font-semibold text-slate-900{{else}}border-transparent text-slate-500 hover:text-slate-900{{/if}}">Appearance</a>
+  <a href="/settings?tab=password" class="-mb-px border-b-2 px-3 py-2 text-sm {{#if (eq tab 'password')}}border-brand-500 font-semibold text-slate-900{{else}}border-transparent text-slate-500 hover:text-slate-900{{/if}}">Password</a>
+</nav>
+
+{{#if (and canManage (eq tab "system"))}}
+<form method="POST" action="/settings/system" class="space-y-5">
+  {{> csrf}}
+  {{#each groups}}
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">{{category}}</h2></div>
+    <div class="divide-y divide-slate-100">
+      {{#each items}}
+      <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+        <label class="text-sm text-slate-700" for="s-{{key}}">{{label}}</label>
+        <input class="input w-32" id="s-{{key}}" name="{{key}}" type="{{#if (eq valueType 'number')}}number{{else}}text{{/if}}" min="0" value="{{value}}" />
+      </div>
+      {{/each}}
+    </div>
+  </div>
+  {{/each}}
+  <div class="flex justify-end"><button class="btn-primary" type="submit">Save settings</button></div>
+</form>
+{{/if}}
+
+{{#if (and canManage (eq tab "events"))}}
+<form method="POST" action="/settings/event-types" class="card">
+  {{> csrf}}
+  <div class="card-header"><h2 class="card-title">Add event type</h2></div>
+  <div class="card-body grid grid-cols-1 gap-3 md:grid-cols-4">
+    <input class="input mono uppercase" name="code" required pattern="[A-Za-z][A-Za-z0-9_]{2,63}" placeholder="CODE" aria-label="Code" />
+    <input class="input" name="name" required maxlength="150" placeholder="Name" aria-label="Name" />
+    <select class="input" name="category" aria-label="Category">{{#each categories}}<option value="{{this}}">{{humanize this}}</option>{{/each}}</select>
+    <select class="input" name="defaultSeverity" aria-label="Severity">{{#each severities}}<option value="{{this}}">{{statusText this}}</option>{{/each}}</select>
+    <div class="flex flex-wrap items-center gap-4 text-sm text-slate-600 md:col-span-3">
+      <label class="flex items-center gap-2"><input type="checkbox" name="isSensitive" class="check" /> Sensitive</label>
+      <label class="flex items-center gap-2"><input type="checkbox" name="requiresEntity" class="check" /> Needs record</label>
+      <label class="flex items-center gap-2"><input type="checkbox" name="requiresChanges" class="check" /> Needs before/after</label>
+    </div>
+    <button class="btn-primary" type="submit">Add</button>
+  </div>
+</form>
+<div class="card">
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Event</th><th>Category</th><th>Severity</th><th>Status</th><th></th></tr></thead>
+    <tbody>{{#each eventTypes}}<tr>
+      <td><div class="cell-main">{{name}}</div><div class="mono text-slate-400">{{code}}</div></td>
+      <td class="text-slate-600">{{humanize category}}</td>
+      <td>{{badge defaultSeverity}}</td>
+      <td>{{#if isActive}}{{badge "ACTIVE"}}{{else}}{{badge "INACTIVE" "Disabled"}}{{/if}}</td>
+      <td class="text-right"><form method="POST" action="/settings/event-types/{{id}}/toggle" data-confirm="{{#if isActive}}Disable{{else}}Enable{{/if}} {{name}}?">{{> csrf}}<button class="btn-ghost btn-sm" type="submit">{{#if isActive}}Disable{{else}}Enable{{/if}}</button></form></td>
+    </tr>{{/each}}</tbody>
+  </table></div>
+</div>
+{{/if}}
+
+{{#if (and canManage (eq tab "security"))}}
+<div class="card max-w-2xl">
+  <div class="card-header"><h2 class="card-title">Integrity signing key</h2>{{#if keyStatus.ok}}{{badge "PASS" "Configured"}}{{else}}{{badge "FAIL" "Missing"}}{{/if}}</div>
+  <div class="card-body space-y-3 text-sm text-slate-600">
+    {{#if keyStatus.ok}}<p>Active key: <span class="mono text-slate-900">{{keyStatus.keyId}}</span></p>{{else}}<p class="text-red-600">{{keyStatus.message}}</p>{{/if}}
+    <p>Keys are stored in the server's <span class="mono">.env</span> file, never in the database. Back them up separately.</p>
+  </div>
+</div>
+{{/if}}
+
+{{#if (eq tab "appearance")}}
+<div class="card max-w-2xl">
+  <div class="card-header"><div><h2 class="card-title">Theme</h2><p class="mt-0.5 text-xs text-slate-500">Saved on this browser. Dark mode uses soft, low-glare colours that are easier on the eyes during long or night-time sessions.</p></div></div>
+  <div class="card-body grid grid-cols-1 gap-3 sm:grid-cols-3" role="group" aria-label="Theme">
+    <button type="button" data-theme-set="light" aria-pressed="false" class="group rounded-xl border border-slate-200 p-2 text-left transition hover:border-brand-300 aria-pressed:border-brand-500 aria-pressed:ring-4 aria-pressed:ring-brand-500/15">
+      <span class="block overflow-hidden rounded-lg border border-[#e2e8f0] bg-[#f4f6f9]"><span class="flex h-20"><span class="w-1/4 border-r border-[#e2e8f0] bg-[#ffffff]"></span><span class="flex-1 space-y-1.5 p-2"><span class="block h-2 w-2/3 rounded bg-[#cbd5e1]"></span><span class="block h-8 rounded bg-[#ffffff] shadow-sm"></span></span></span></span>
+      <span class="mt-2 block px-1 text-sm font-semibold text-slate-900">Light</span><span class="block px-1 text-xs text-slate-500">Bright workspace</span>
+    </button>
+    <button type="button" data-theme-set="dark" aria-pressed="false" class="group rounded-xl border border-slate-200 p-2 text-left transition hover:border-brand-300 aria-pressed:border-brand-500 aria-pressed:ring-4 aria-pressed:ring-brand-500/15">
+      <span class="block overflow-hidden rounded-lg border border-[#2f3746] bg-[#0e121a]"><span class="flex h-20"><span class="w-1/4 border-r border-[#2f3746] bg-[#161b25]"></span><span class="flex-1 space-y-1.5 p-2"><span class="block h-2 w-2/3 rounded bg-[#424c5e]"></span><span class="block h-8 rounded bg-[#161b25]"></span></span></span></span>
+      <span class="mt-2 block px-1 text-sm font-semibold text-slate-900">Dark</span><span class="block px-1 text-xs text-slate-500">Easier on the eyes</span>
+    </button>
+    <button type="button" data-theme-set="system" aria-pressed="false" class="group rounded-xl border border-slate-200 p-2 text-left transition hover:border-brand-300 aria-pressed:border-brand-500 aria-pressed:ring-4 aria-pressed:ring-brand-500/15">
+      <span class="block overflow-hidden rounded-lg border border-[#94a3b8]"><span class="flex h-20"><span class="w-1/2 bg-[#f4f6f9]"></span><span class="w-1/2 bg-[#0e121a]"></span></span></span>
+      <span class="mt-2 block px-1 text-sm font-semibold text-slate-900">System</span><span class="block px-1 text-xs text-slate-500">Follow device setting</span>
+    </button>
+  </div>
+</div>
+{{/if}}
+
+{{#if (eq tab "password")}}
+<form method="POST" action="/settings/password" class="card max-w-md" autocomplete="off">
+  {{> csrf}}
+  <div class="card-body space-y-4">
+    <div><label class="label">Current password</label><input class="input" type="password" name="currentPassword" required autocomplete="current-password" /></div>
+    <div><label class="label">New password</label><input class="input" type="password" name="newPassword" required minlength="10" autocomplete="new-password" /><p class="help">10+ characters with uppercase, lowercase and a number.</p></div>
+    <div><label class="label">Confirm new password</label><input class="input" type="password" name="confirmPassword" required minlength="10" autocomplete="new-password" /></div>
+    <button class="btn-primary" type="submit">Update password</button>
+  </div>
+</form>
+{{/if}}
+{{> footer}}

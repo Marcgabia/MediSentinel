@@ -1,0 +1,57 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Transaction Void Investigation</h1>
+    <p class="page-sub">{{number total}} transaction(s) with void activity · {{dateOnly from}} – {{dateOnly to}} · read-only</p>
+  </div>
+</div>
+{{> audit-tabs}}
+
+<div class="notice border-amber-200 bg-amber-50 text-amber-900">MediSentinel records voids reported by the connected systems; it never approves or voids transactions. Highlighted items are <strong>indicators for review</strong> and do not by themselves imply wrongdoing.</div>
+
+<form method="GET" action="/audit/voids" class="card no-print">
+  <div class="grid grid-cols-1 gap-3 p-4 md:grid-cols-3 xl:grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_auto]">
+    <div><label class="label">From</label><input class="input" type="date" name="from" value="{{filters.from}}" /></div>
+    <div><label class="label">To</label><input class="input" type="date" name="to" value="{{filters.to}}" /></div>
+    <div><label class="label">System</label><select class="input" name="sourceSystemId"><option value="">All</option>{{#each options.sources}}<option value="{{id}}" {{selected id ../filters.sourceSystemId}}>{{name}}</option>{{/each}}</select></div>
+    <div><label class="label">Branch</label><select class="input" name="branchId"><option value="">All</option>{{#each options.branches}}<option value="{{this}}" {{selected this ../filters.branchId}}>{{this}}</option>{{/each}}</select></div>
+    <div><label class="label">Requester (user ID or username)</label><input class="input" name="requester" value="{{filters.requester}}" /></div>
+    <div><label class="label">Indicator</label><select class="input" name="indicator"><option value="">Any</option>{{#each options.indicators}}<option value="{{code}}" {{selected code ../filters.indicator}}>{{label}}</option>{{/each}}</select></div>
+    <div class="flex items-end"><button class="btn-primary" type="submit">Apply</button></div>
+  </div>
+  <div class="divider flex flex-wrap items-center gap-4 px-4 py-2 text-xs">
+    <input class="input mono w-56" name="ref" value="{{filters.ref}}" placeholder="Transaction ID contains…" aria-label="Transaction ID" />
+    <label class="flex items-center gap-2 text-slate-600"><input type="checkbox" name="flagged" value="true" class="check" {{checked filters.flagged}} /> Only transactions with indicators</label>
+    <a class="link" href="/audit/voids">Reset</a>
+  </div>
+</form>
+
+<section class="grid grid-cols-2 gap-3 lg:grid-cols-6">
+  {{#each indicatorTotals}}
+  <a href="/audit/voids?from={{../filters.from}}&to={{../filters.to}}&indicator={{code}}" class="stat">
+    <div class="stat-label">{{label}}</div>
+    <div class="stat-value {{#if count}}text-orange-600{{/if}}">{{count}}</div>
+  </a>
+  {{/each}}
+</section>
+
+<div class="card">
+  {{#if rows.length}}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Transaction</th><th>Status</th><th>Processed by</th><th>Requested by</th><th>Authorized by</th><th>Reason</th><th>Last activity</th><th>Indicators</th></tr></thead>
+    <tbody>{{#each rows}}<tr class="align-top">
+      <td><a class="link mono" href="/audit/transactions/{{encode transactionRef}}?sourceSystemId={{sourceSystemId}}">{{transactionRef}}</a><div class="cell-sub">{{sourceSystemName}}{{#if branchId}} · <span class="mono">{{branchId}}</span>{{/if}}</div></td>
+      <td class="whitespace-nowrap">{{#if statusBeforeVoid}}{{badge statusBeforeVoid}} <span class="text-slate-400">→</span> {{/if}}{{#if currentStatus}}{{badge currentStatus}}{{else}}—{{/if}}</td>
+      <td>{{who processedBy}}</td>
+      <td>{{#if voidRequest}}{{who voidRequest.by}}{{else}}<span class="text-slate-400">not recorded</span>{{/if}}</td>
+      <td>{{#if authorizedBy}}{{who authorizedBy}}{{else}}{{#if authorizationReference}}<span class="mono text-xs">ref {{authorizationReference}}</span>{{else}}<span class="text-slate-400">—</span>{{/if}}{{/if}}</td>
+      <td class="max-w-xs text-slate-600">{{#if voidReason}}{{truncate voidReason 80}}{{else}}<span class="text-slate-400">—</span>{{/if}}</td>
+      <td class="whitespace-nowrap text-slate-500">{{date lastAt}}</td>
+      <td class="space-y-1">{{#each indicators}}<div title="{{detail}}">{{badge "WARNING" label}}</div>{{else}}<span class="text-xs text-slate-400">None</span>{{/each}}</td>
+    </tr>{{/each}}</tbody>
+  </table></div>
+  {{> pagination}}
+  {{else}}<div class="empty">No void activity was received for these filters</div>{{/if}}
+  {{#if truncated}}<div class="divider px-4 py-2 text-xs text-amber-700">Showing the 500 most recent transactions with void activity. Narrow the date range to see older ones.</div>{{/if}}
+</div>
+{{> footer}}

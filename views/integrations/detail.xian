@@ -1,0 +1,128 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/integrations" class="text-xs text-slate-500 hover:text-slate-900">← System Integrations</a>
+    <h1 class="page-title mt-1 flex items-center gap-3">{{source.name}} {{badge source.health.status source.health.label}}</h1>
+    <p class="page-sub mono">{{source.systemCode}}</p>
+  </div>
+  <div class="actions">
+    <a href="/audit?sourceSystemId={{source.id}}" class="btn-secondary">Events</a>
+    {{#if canManage}}{{#unless source.isInternal}}
+      <a href="/integrations/{{source.id}}/edit" class="btn-secondary">Edit</a>
+      <form method="POST" action="/integrations/{{source.id}}/test">{{> csrf}}<button class="btn-primary" type="submit">Test connection</button></form>
+    {{/unless}}{{/if}}
+  </div>
+</div>
+
+<section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <div class="stat"><div class="stat-label">Total events</div><div class="stat-value">{{number source.totalEvents}}</div></div>
+  <div class="stat"><div class="stat-label">Accepted (24h)</div><div class="stat-value text-emerald-600">{{number source.last24h.accepted}}</div></div>
+  <div class="stat"><div class="stat-label">Invalid (24h)</div><div class="stat-value {{#if source.last24h.invalid}}text-amber-600{{/if}}">{{number source.last24h.invalid}}</div></div>
+  <div class="stat"><div class="stat-label">Failed (24h)</div><div class="stat-value {{#if source.last24h.failed}}text-red-600{{/if}}">{{number source.last24h.failed}}</div></div>
+</section>
+
+<div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+  <div class="card xl:col-span-2">
+    <div class="card-header"><h2 class="card-title">Details</h2></div>
+    <div class="card-body">
+      <dl class="kv">
+        <dt>Description</dt><dd>{{default source.description "—"}}</dd>
+        <dt>Environment</dt><dd>{{humanize source.environment}}</dd>
+        <dt>Status</dt><dd>{{badge source.status}}</dd>
+        <dt>Health</dt><dd>{{source.health.reason}}</dd>
+        <dt>Last connection</dt><dd>{{#if source.lastSuccessfulConnectionAt}}{{date source.lastSuccessfulConnectionAt}} <span class="text-slate-400">· {{ago source.lastSuccessfulConnectionAt}}</span>{{else}}Never{{/if}}</dd>
+        <dt>Last event</dt><dd>{{#if source.lastEventReceivedAt}}{{date source.lastEventReceivedAt}}{{else}}None{{/if}}</dd>
+        <dt>Last heartbeat</dt><dd>{{#if source.lastHeartbeatAt}}{{date source.lastHeartbeatAt}} <span class="text-slate-400">· {{default source.lastHeartbeatPayload.pendingEvents 0}} pending</span>{{else}}None{{/if}}</dd>
+        <dt>Connection test</dt><dd>{{#if source.lastConnectionTestResult}}{{badge source.lastConnectionTestResult.status}} <span class="text-slate-500">{{source.lastConnectionTestResult.message}}</span>{{else}}Not run{{/if}}</dd>
+        <dt>System URL</dt><dd class="mono">{{default source.apiEndpoint "—"}}</dd>
+        <dt>Registered</dt><dd>{{dateOnly source.registeredAt}}{{#if source.registeredBy}} by {{source.registeredBy.fullName}}{{/if}}</dd>
+      </dl>
+    </div>
+  </div>
+  {{#unless source.isInternal}}
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">How to connect</h2></div>
+    <div class="card-body space-y-3 text-sm">
+      <div><div class="text-xs text-slate-500">Endpoint</div><div class="mono mt-0.5 break-all">POST {{apiBase}}/audit-events</div></div>
+      <div><div class="text-xs text-slate-500">sourceSystem</div><div class="mono mt-0.5">{{source.systemCode}}</div></div>
+      <div><div class="text-xs text-slate-500">Headers</div><div class="mono mt-0.5 leading-5 text-slate-600">X-MediSentinel-Key<br />X-MediSentinel-Timestamp<br />X-MediSentinel-Signature</div></div>
+      <p class="text-xs text-slate-400">Full guide: docs/API_INTEGRATION.md</p>
+    </div>
+  </div>
+  {{/unless}}
+</div>
+
+{{#unless source.isInternal}}
+<div class="card">
+  <div class="card-header"><h2 class="card-title">API keys</h2></div>
+  {{#if canManageCredentials}}
+  <form method="POST" action="/integrations/{{source.id}}/credentials" class="flex flex-wrap items-center gap-2 border-b border-slate-100 px-5 py-3" data-confirm="Create a new API key? The secret is shown only once.">
+    {{> csrf}}
+    <input class="input max-w-xs" name="label" maxlength="120" placeholder="Label (optional)" />
+    <button class="btn-success" type="submit">New API key</button>
+  </form>
+  {{/if}}
+  {{#if credentials.length}}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Key ID</th><th>Label</th><th>Status</th><th>Created</th><th>Last used</th><th></th></tr></thead>
+    <tbody>{{#each credentials}}
+      <tr>
+        <td class="mono">{{keyId}}</td>
+        <td>{{default label "—"}}</td>
+        <td>{{badge status}}</td>
+        <td class="whitespace-nowrap text-slate-500">{{dateOnly createdAt}}</td>
+        <td class="whitespace-nowrap text-slate-500">{{#if lastUsedAt}}{{ago lastUsedAt}}{{else}}Never{{/if}}</td>
+        <td class="text-right">{{#if (and @root.canManageCredentials (eq status "ACTIVE"))}}
+          <form method="POST" action="/integrations/{{../source.id}}/credentials/{{id}}/revoke" data-confirm="Revoke {{keyId}}? It stops working immediately.">{{> csrf}}<button class="btn-danger btn-sm" type="submit">Revoke</button></form>
+        {{/if}}</td>
+      </tr>{{/each}}</tbody>
+  </table></div>
+  {{else}}<div class="empty">No API keys yet</div>{{/if}}
+</div>
+
+<div class="card" id="registry">
+  <div class="card-header">
+    <h2 class="card-title">Expected events</h2>
+    <div class="flex items-center gap-3">
+      {{#if canManageRegistry}}<form method="POST" action="/integrations/{{source.id}}/registry/pos-template" data-confirm="Add every POS Audit Event Registry event type to {{source.name}}'s expected events? Routine access events are added as optional.">{{> csrf}}<button class="btn-ghost btn-sm" type="submit">Apply POS event template</button></form>{{/if}}
+      <a href="/qa/coverage" class="card-link">Coverage</a>
+    </div>
+  </div>
+  {{#if canManageRegistry}}
+  <form method="POST" action="/integrations/{{source.id}}/registry" class="flex flex-wrap items-center gap-2 border-b border-slate-100 px-5 py-3">
+    {{> csrf}}
+    <select class="input max-w-xs" name="eventTypeId" required aria-label="Event">{{#each availableEventTypes}}<option value="{{id}}">{{name}}</option>{{/each}}</select>
+    <input class="input max-w-[12rem]" name="sourceModule" maxlength="100" placeholder="Module" />
+    <label class="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" name="isRequired" checked class="check" /> Required</label>
+    <button class="btn-secondary" type="submit">Add</button>
+  </form>
+  {{/if}}
+  {{#if registry.length}}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Event</th><th>Module</th><th>Required</th><th></th></tr></thead>
+    <tbody>{{#each registry}}
+      <tr>
+        <td class="cell-main">{{eventType.name}}</td>
+        <td class="text-slate-500">{{default sourceModule "—"}}</td>
+        <td class="text-slate-500">{{#if isRequired}}Yes{{else}}No{{/if}}</td>
+        <td class="text-right">{{#if @root.canManageRegistry}}<form method="POST" action="/integrations/{{../source.id}}/registry/{{id}}/delete" data-confirm="Remove {{eventType.name}}?">{{> csrf}}<button class="btn-ghost btn-sm" type="submit">Remove</button></form>{{/if}}</td>
+      </tr>{{/each}}</tbody>
+  </table></div>
+  {{else}}<div class="empty">No expected events</div>{{/if}}
+</div>
+{{/unless}}
+
+<div class="card">
+  <div class="card-header"><h2 class="card-title">Recent requests</h2><a href="/integrations/logs?sourceSystemId={{source.id}}" class="card-link">View all</a></div>
+  {{#if recentLogs.length}}
+  <div class="table-wrap"><table class="table">
+    <tbody>{{#each recentLogs}}<tr>
+      <td class="whitespace-nowrap text-slate-500">{{dateTime createdAt}}</td>
+      <td>{{#if actionCode}}{{action actionCode}}{{else}}<span class="mono text-slate-500">{{endpoint}}</span>{{/if}}</td>
+      <td>{{badge outcome}}</td>
+      <td class="mono text-slate-500">{{default errorCode ""}}</td>
+    </tr>{{/each}}</tbody>
+  </table></div>
+  {{else}}<div class="empty">{{#if source.isInternal}}Internal events do not use the API{{else}}No requests yet{{/if}}</div>{{/if}}
+</div>
+{{> footer}}

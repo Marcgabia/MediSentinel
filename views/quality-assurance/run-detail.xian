@@ -1,0 +1,48 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/qa/runs" class="text-xs text-slate-500 hover:text-slate-900">← Verification History</a>
+    <h1 class="page-title mt-1">{{run.runCode}}</h1>
+    <p class="page-sub">{{date run.startedAt}} · {{run.executedByLabel}} · {{number run.recordsVerified}} records</p>
+  </div>
+  <div class="actions">{{#if (eq run.status "COMPLETED")}}{{badge run.overallResult}}{{else}}{{badge run.status}}{{/if}} <button type="button" class="btn-secondary no-print" data-print>Print</button></div>
+</div>
+
+<section class="grid grid-cols-2 gap-3 lg:grid-cols-5">
+  <div class="stat"><div class="stat-label">Checks</div><div class="stat-value">{{run.totalChecks}}</div></div>
+  <div class="stat"><div class="stat-label">Passed</div><div class="stat-value text-emerald-600">{{run.passedChecks}}</div></div>
+  <div class="stat"><div class="stat-label">Failed</div><div class="stat-value {{#if run.failedChecks}}text-red-600{{/if}}">{{run.failedChecks}}</div></div>
+  <div class="stat"><div class="stat-label">Warnings</div><div class="stat-value {{#if run.warningChecks}}text-amber-600{{/if}}">{{run.warningChecks}}</div></div>
+  <div class="stat"><div class="stat-label">Coverage</div><div class="stat-value">{{#if (isSet run.findingsSummary.coveragePercent)}}{{run.findingsSummary.coveragePercent}}%{{else}}—{{/if}}</div></div>
+</section>
+{{#if run.errorMessage}}<div class="notice border-red-200 bg-red-50 text-red-700">{{run.errorMessage}}</div>{{/if}}
+
+{{#each grouped}}
+<div class="card">
+  <div class="card-header"><h2 class="card-title">{{label}}</h2></div>
+  {{#if results.length}}
+  <div class="table-wrap"><table class="table">
+    <tbody>{{#each results}}<tr>
+      <td class="cell-main w-64">{{checkName}}</td>
+      <td class="w-48 text-slate-600">{{default sourceSystem.name "All"}}</td>
+      <td class="w-32">{{badge status}}</td>
+      <td class="text-xs text-slate-500">{{summary}}</td>
+    </tr>{{/each}}</tbody>
+  </table></div>
+  {{else}}<div class="empty">No checks</div>{{/if}}
+</div>
+{{/each}}
+
+<div class="card">
+  <div class="card-header"><h2 class="card-title">Findings</h2></div>
+  {{#if findings.length}}
+  <div class="table-wrap"><table class="table">
+    <tbody>{{#each findings}}<tr>
+      <td class="max-w-xl"><a class="cell-main hover:text-emerald-700" href="/qa/findings/{{id}}">{{title}}</a><div class="cell-sub">{{findingCode}} · {{default sourceSystem.name "All systems"}}</div></td>
+      <td>{{badge severity}}</td>
+      <td>{{badge status}}</td>
+    </tr>{{/each}}</tbody>
+  </table></div>
+  {{else}}<div class="empty">No findings</div>{{/if}}
+</div>
+{{> footer}}

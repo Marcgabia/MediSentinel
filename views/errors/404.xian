@@ -1,0 +1,8 @@
+{{#if currentUser}}{{> head}}{{else}}<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Not found · MediSentinel</title><script src="/js/theme.js?v=3"></script><link rel="stylesheet" href="/css/app.css?v=3" /><link rel="icon" href="/img/favicon-32.png?v=3" type="image/png" /></head><body class="bg-canvas"><main class="mx-auto max-w-xl p-10">{{/if}}
+<div class="mx-auto max-w-md py-16 text-center">
+  <div class="text-sm font-medium text-emerald-600">404</div>
+  <h1 class="mt-2 text-2xl font-semibold text-slate-900">Page not found</h1>
+  <p class="mt-2 text-slate-500">{{default message "This page does not exist."}}</p>
+  <a href="/dashboard" class="btn-primary mt-6">Go to dashboard</a>
+</div>
+{{#if currentUser}}{{> footer}}{{else}}</main></body></html>{{/if}}

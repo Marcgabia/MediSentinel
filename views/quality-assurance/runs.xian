@@ -1,0 +1,28 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/qa" class="text-xs text-slate-500 hover:text-slate-900">← Quality Assurance</a>
+    <h1 class="page-title mt-1">Verification History</h1>
+  </div>
+  <div class="actions">{{#if canRun}}<form method="POST" action="/qa/run">{{> csrf}}<button class="btn-primary" type="submit">Run verification</button></form>{{/if}}</div>
+</div>
+<div class="card">
+  {{#if runs.length}}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Run</th><th>Date</th><th>By</th><th>Checks</th><th>Pass</th><th>Fail</th><th>Warn</th><th>Result</th><th>New findings</th></tr></thead>
+    <tbody>{{#each runs}}<tr>
+      <td><a class="link mono" href="/qa/runs/{{id}}">{{runCode}}</a></td>
+      <td class="whitespace-nowrap text-slate-500">{{date startedAt}}</td>
+      <td class="text-slate-600">{{executedByLabel}}</td>
+      <td>{{totalChecks}}</td>
+      <td class="text-emerald-600">{{passedChecks}}</td>
+      <td class="{{#if failedChecks}}text-red-600{{/if}}">{{failedChecks}}</td>
+      <td class="{{#if warningChecks}}text-amber-600{{/if}}">{{warningChecks}}</td>
+      <td>{{#if (eq status "COMPLETED")}}{{badge overallResult}}{{else}}{{badge status}}{{/if}}</td>
+      <td>{{#if findingsSummary}}{{findingsSummary.newFindings}}{{else}}—{{/if}}</td>
+    </tr>{{/each}}</tbody>
+  </table></div>
+  {{> pagination}}
+  {{else}}<div class="empty">No runs yet</div>{{/if}}
+</div>
+{{> footer}}

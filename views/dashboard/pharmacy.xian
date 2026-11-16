@@ -1,0 +1,64 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Pharmacy Operations</h1>
+    <p class="page-sub">Audited activity from connected pharmacy applications · {{dateOnly from}} – {{dateOnly to}}</p>
+  </div>
+</div>
+{{> dashboard-tabs}}
+
+<form method="GET" action="/dashboard/pharmacy" class="card no-print">
+  <div class="grid grid-cols-1 gap-3 p-4 md:grid-cols-3 xl:grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_auto]">
+    <div><label class="label">System</label><select class="input" name="sourceSystemId"><option value="">All</option>{{#each options.sources}}<option value="{{id}}" {{selected id ../filters.sourceSystemId}}>{{name}}</option>{{/each}}</select></div>
+    <div><label class="label">Branch</label><select class="input" name="branchId"><option value="">All</option>{{#each options.branches}}<option value="{{this}}" {{selected this ../filters.branchId}}>{{this}}</option>{{/each}}</select></div>
+    <div><label class="label">User ID or username</label><input class="input" name="user" value="{{filters.user}}" /></div>
+    <div><label class="label">Action</label><select class="input" name="actionType"><option value="">All</option>{{#each options.eventTypes}}<option value="{{code}}" {{selected code ../filters.actionType}}>{{name}}</option>{{/each}}</select></div>
+    <div><label class="label">From</label><input class="input" type="date" name="from" value="{{filters.from}}" /></div>
+    <div><label class="label">To</label><input class="input" type="date" name="to" value="{{filters.to}}" /></div>
+    <div class="flex items-end"><button class="btn-primary" type="submit">Apply</button></div>
+  </div>
+</form>
+
+<section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <a href="/audit/cross-system?{{filterQuery}}" class="stat"><div class="stat-label">POS audit events</div><div class="stat-value">{{number cards.totalPosEvents}}</div></a>
+  <div class="stat"><div class="stat-label">Completed transactions monitored</div><div class="stat-value">{{number cards.completedTransactions}}</div></div>
+  {{#if (can "transactions.view")}}<a href="/audit/voids?from={{filters.from}}&to={{filters.to}}" class="stat">{{else}}<div class="stat">{{/if}}
+    <div class="stat-label">Voided transactions</div><div class="stat-value {{#if cards.voidedTransactions}}text-orange-600{{/if}}">{{number cards.voidedTransactions}}</div>
+  {{#if (can "transactions.view")}}</a>{{else}}</div>{{/if}}
+  <a href="/audit/configuration?from={{filters.from}}&to={{filters.to}}" class="stat"><div class="stat-label">Configuration changes</div><div class="stat-value">{{number cards.configurationChanges}}</div></a>
+  <a href="/audit/cross-system?activity=CUSTOMER&from={{filters.from}}&to={{filters.to}}" class="stat"><div class="stat-label">Customer management activities</div><div class="stat-value">{{number cards.customerActivities}}</div></a>
+  <div class="stat"><div class="stat-label">Administrative activities</div><div class="stat-value">{{number cards.administrativeActivities}}</div></div>
+  <div class="stat"><div class="stat-label">Failed POS events</div><div class="stat-value {{#if cards.failedPosEvents}}text-red-600{{/if}}">{{number cards.failedPosEvents}}</div></div>
+  <a href="/qa/findings?status=unresolved" class="stat"><div class="stat-label">Pending audit findings</div><div class="stat-value {{#if cards.pendingFindings}}text-orange-600{{/if}}">{{number cards.pendingFindings}}</div><div class="stat-sub">pharmacy QA checks, all dates</div></a>
+</section>
+
+<section class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+  <div class="card xl:col-span-2">
+    <div class="card-header"><h2 class="card-title">POS activity trend</h2><span class="text-xs text-slate-400">events per day</span></div>
+    <div class="card-body h-64"><canvas data-chart="posTrend"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Activities by source system</h2></div>
+    <div class="card-body h-64"><canvas data-chart="posSource"></canvas></div>
+  </div>
+  <div class="card xl:col-span-2">
+    <div class="card-header"><h2 class="card-title">Voided transaction trend</h2><span class="text-xs text-slate-400">per day</span></div>
+    <div class="card-body h-56"><canvas data-chart="posVoids"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Transaction status changes</h2></div>
+    <div class="card-body h-56"><canvas data-chart="posStatus"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Activities by cashier</h2><span class="text-xs text-slate-400">user · system</span></div>
+    <div class="card-body h-64"><canvas data-chart="posCashier"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Activities by branch</h2></div>
+    <div class="card-body h-64"><canvas data-chart="posBranch"></canvas></div>
+  </div>
+</section>
+<script type="application/json" id="chart-data">{{{jsonInline charts}}}</script>
+<script src="/vendor/chart.umd.min.js"></script>
+<script src="/js/charts.js?v=3"></script>
+{{> footer}}

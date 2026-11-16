@@ -1,0 +1,32 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/users" class="text-xs text-slate-500 hover:text-slate-900">← User Management</a>
+    <h1 class="page-title mt-1">Roles</h1>
+    <p class="page-sub">What each role can do in MediSentinel</p>
+  </div>
+</div>
+<div class="grid grid-cols-1 gap-5 xl:grid-cols-2">
+  {{#each roles}}
+  <form method="POST" action="/users/roles/{{id}}" class="card flex flex-col">
+    {{> csrf}}
+    <div class="card-header">
+      <div><h2 class="card-title">{{name}}</h2><p class="text-xs text-slate-500">{{userCount}} user(s)</p></div>
+      {{#unless editable}}<span class="text-xs text-slate-400">{{#if (eq code "SYSTEM_ADMIN")}}Full access{{else}}API only{{/if}}</span>{{/unless}}
+    </div>
+    <div class="card-body flex-1">
+      {{#if canAccessDashboard}}
+      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {{#each grants}}
+        <label class="flex items-center gap-2 text-sm {{#if granted}}text-slate-800{{else}}text-slate-400{{/if}}"><input type="checkbox" name="permissions" value="{{code}}" {{checked granted}} {{#unless ../editable}}disabled{{/unless}} class="check" />{{label}}</label>
+        {{/each}}
+      </div>
+      {{else}}
+      <p class="text-sm text-slate-500">Used by connected systems to send events. Cannot sign in.</p>
+      {{/if}}
+    </div>
+    {{#if editable}}<div class="flex justify-end border-t border-slate-100 px-5 py-3"><button class="btn-secondary" type="submit">Save</button></div>{{/if}}
+  </form>
+  {{/each}}
+</div>
+{{> footer}}

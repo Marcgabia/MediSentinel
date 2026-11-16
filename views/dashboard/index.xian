@@ -1,0 +1,134 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-sub">Activity across all connected systems</p>
+  </div>
+</div>
+{{> dashboard-tabs}}
+
+<section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <a href="/audit" class="stat">
+    <div class="stat-label">Total events</div>
+    <div class="stat-value">{{number summary.totalEvents}}</div>
+  </a>
+  <a href="/audit?from={{today}}" class="stat">
+    <div class="stat-label">Today</div>
+    <div class="stat-value">{{number summary.todayEvents}}</div>
+  </a>
+  <a href="/integrations/monitor" class="stat">
+    <div class="stat-label">Connected systems</div>
+    <div class="stat-value">{{summary.connectedSystems}}<span class="text-base font-normal text-slate-400"> / {{summary.registeredSystems}}</span></div>
+  </a>
+  <a href="/user-activity" class="stat">
+    <div class="stat-label">Active users (24h)</div>
+    <div class="stat-value">{{number summary.activeUsers}}</div>
+  </a>
+  <a href="/audit?outcome=FAILURE&from={{today}}" class="stat">
+    <div class="stat-label">Failed today</div>
+    <div class="stat-value {{#if summary.failedToday}}text-red-600{{/if}}">{{number summary.failedToday}}</div>
+  </a>
+  <a href="/alerts" class="stat">
+    <div class="stat-label">Open alerts</div>
+    <div class="stat-value {{#if summary.criticalAlerts}}text-orange-600{{/if}}">{{number summary.activeAlerts}}</div>
+    {{#if summary.criticalAlerts}}<div class="stat-sub text-red-600">{{summary.criticalAlerts}} high or critical</div>{{/if}}
+  </a>
+  <a href="/investigations" class="stat">
+    <div class="stat-label">Open investigations</div>
+    <div class="stat-value">{{number summary.pendingInvestigations}}</div>
+  </a>
+  <a href="{{#if summary.qa.id}}/qa/runs/{{summary.qa.id}}{{else}}/qa{{/if}}" class="stat">
+    <div class="stat-label">Last QA check</div>
+    <div class="mt-2">{{badge summary.qa.overallResult}}</div>
+    {{#if summary.qa.completedAt}}<div class="stat-sub mt-1.5">{{ago summary.qa.completedAt}}</div>{{/if}}
+  </a>
+</section>
+
+<section class="grid grid-cols-1 gap-5 xl:grid-cols-3" data-chart-source="/dashboard/charts.json">
+  <div class="card xl:col-span-2">
+    <div class="card-header">
+      <h2 class="card-title">Audit activity</h2>
+      <div class="flex gap-1">
+        <button type="button" class="tab" data-chart-tab="daily">14 days</button>
+        <button type="button" class="tab" data-chart-tab="weekly">12 weeks</button>
+        <button type="button" class="tab" data-chart-tab="monthly">12 months</button>
+      </div>
+    </div>
+    <div class="card-body h-72"><canvas data-chart-tabs="daily"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Outcomes</h2><span class="text-xs text-slate-400">30 days</span></div>
+    <div class="card-body h-72"><canvas data-chart="outcomes"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">By system</h2><span class="text-xs text-slate-400">30 days</span></div>
+    <div class="card-body h-64"><canvas data-chart="bySource"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Top actions</h2><span class="text-xs text-slate-400">30 days</span></div>
+    <div class="card-body h-64"><canvas data-chart="byAction"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Most active users</h2><span class="text-xs text-slate-400">30 days</span></div>
+    <div class="card-body h-64"><canvas data-chart="byUser"></canvas></div>
+  </div>
+</section>
+
+<section class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+  {{#if (can "audit.view")}}
+  <div class="card xl:col-span-2">
+    <div class="card-header">
+      <h2 class="card-title">Recent activity</h2>
+      <a href="/audit" class="card-link">View all</a>
+    </div>
+    {{#if recent.length}}
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Time</th><th>Event</th><th>User</th><th>System</th><th>Status</th></tr></thead>
+        <tbody>
+          {{#each recent}}
+          <tr>
+            <td class="whitespace-nowrap text-slate-500"><a class="link font-normal" href="/audit/{{id}}">{{date occurredAt}}</a></td>
+            <td><a href="/audit/{{id}}" class="cell-main hover:text-emerald-700">{{action actionType}}</a>{{#if entityId}}<div class="cell-sub">{{entityId}}</div>{{/if}}</td>
+            <td>{{default actorUsername (default actorUserId "—")}}</td>
+            <td class="text-slate-500">{{sourceSystemName}}</td>
+            <td>{{badge outcome}}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+    {{else}}
+    <div class="empty">No activity yet</div>
+    {{/if}}
+  </div>
+  {{/if}}
+
+  <div class="space-y-5">
+    {{#if (can "alerts.view")}}
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Open alerts</h2><a href="/alerts" class="card-link">View all</a></div>
+      {{#if alerts.length}}
+      <ul class="divide-y divide-slate-100">
+        {{#each alerts}}
+        <li><a href="/alerts/{{id}}" class="flex items-start justify-between gap-3 px-5 py-3 hover:bg-slate-50">
+          <div class="min-w-0">
+            <div class="truncate font-medium text-slate-900">{{title}}</div>
+            <div class="text-xs text-slate-500">{{default actorUsername "—"}} · {{ago lastDetectedAt}}</div>
+          </div>
+          {{badge severity}}
+        </a></li>
+        {{/each}}
+      </ul>
+      {{else}}<div class="empty">No open alerts</div>{{/if}}
+    </div>
+    {{/if}}
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Alert trend</h2><span class="text-xs text-slate-400">30 days</span></div>
+      <div class="card-body h-40"><canvas data-chart="suspicious"></canvas></div>
+    </div>
+  </div>
+</section>
+<script src="/vendor/chart.umd.min.js"></script>
+<script src="/js/charts.js?v=3"></script>
+{{> footer}}

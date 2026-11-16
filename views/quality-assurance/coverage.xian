@@ -1,0 +1,34 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/qa" class="text-xs text-slate-500 hover:text-slate-900">← Quality Assurance</a>
+    <h1 class="page-title mt-1">Event Coverage</h1>
+    <p class="page-sub">Expected events received from each system. “Not yet seen” does not mean lost.</p>
+  </div>
+</div>
+
+{{#each matrix}}
+<div class="card">
+  <div class="card-header">
+    <div class="flex items-center gap-3"><a class="card-title hover:text-emerald-700" href="/integrations/{{source.id}}">{{source.name}}</a>{{badge source.health.status source.health.label}}</div>
+    <div class="text-sm">{{#if (isSet percent)}}<span class="font-semibold text-slate-900">{{percent}}%</span> <span class="text-slate-400">· {{verified}}/{{required}}</span>{{else}}{{badge "NOT_TESTED"}}{{/if}}</div>
+  </div>
+  {{#if (isSet percent)}}<div class="h-1 bg-slate-100"><div class="h-1 bg-emerald-500" style="width: {{percent}}%"></div></div>{{/if}}
+  {{#if entries.length}}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Event</th><th>Module</th><th>Received</th><th>Invalid</th><th>Last received</th><th>Status</th></tr></thead>
+    <tbody>{{#each entries}}<tr>
+      <td class="cell-main">{{name}}{{#unless isRequired}} <span class="text-xs font-normal text-slate-400">optional</span>{{/unless}}</td>
+      <td class="text-slate-500">{{default module "—"}}</td>
+      <td>{{#if receivedCount}}<a class="link font-normal" href="/audit?sourceSystemId={{../source.id}}&actionType={{code}}">{{number receivedCount}}</a>{{else}}0{{/if}}</td>
+      <td class="{{#if invalidCount}}text-red-600{{/if}}">{{invalidCount}}</td>
+      <td class="whitespace-nowrap text-slate-500">{{#if lastReceivedAt}}{{ago lastReceivedAt}}{{else}}—{{/if}}</td>
+      <td>{{badge status}}</td>
+    </tr>{{/each}}</tbody>
+  </table></div>
+  {{else}}<div class="empty">No expected events. {{#if @root.canManage}}<a class="link" href="/integrations/{{source.id}}#registry">Add some</a>{{/if}}</div>{{/if}}
+</div>
+{{else}}
+<div class="card"><div class="empty">No systems registered</div></div>
+{{/each}}
+{{> footer}}

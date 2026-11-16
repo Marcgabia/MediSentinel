@@ -1,0 +1,60 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/integrations" class="text-xs text-slate-500 hover:text-slate-900">← System Integrations</a>
+    <h1 class="page-title mt-1">Integration Monitoring</h1>
+    <p class="page-sub">Last 24 hours</p>
+  </div>
+  <div class="actions"><a href="/integrations/logs" class="btn-secondary">API logs</a></div>
+</div>
+
+<section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <div class="stat"><div class="stat-label">Connected</div><div class="stat-value text-emerald-600">{{overview.connected}}</div>{{#if overview.degraded}}<div class="stat-sub">{{overview.degraded}} degraded</div>{{/if}}</div>
+  <div class="stat"><div class="stat-label">Disconnected</div><div class="stat-value {{#if overview.disconnected}}text-red-600{{/if}}">{{overview.disconnected}}</div><div class="stat-sub">{{overview.neverConnected}} never connected</div></div>
+  <div class="stat"><div class="stat-label">Events received</div><div class="stat-value">{{number overview.totals.accepted}}</div><div class="stat-sub">{{number overview.totals.duplicates}} duplicates</div></div>
+  <div class="stat"><div class="stat-label">Failed requests</div><div class="stat-value {{#if overview.totals.failed}}text-red-600{{/if}}">{{number overview.totals.failed}}</div><div class="stat-sub">{{overview.totals.failedRetries}} failed retries</div></div>
+  <div class="stat"><div class="stat-label">Invalid events</div><div class="stat-value {{#if overview.totals.invalid}}text-amber-600{{/if}}">{{number overview.totals.invalid}}</div></div>
+  <div class="stat"><div class="stat-label">Pending deliveries</div><div class="stat-value">{{#if overview.totals.pendingReporters}}{{number overview.totals.pending}}{{else}}—{{/if}}</div><div class="stat-sub">Reported by heartbeats</div></div>
+  <div class="stat"><div class="stat-label">Avg delivery delay</div><div class="stat-value">{{duration overview.avgDelayMs}}</div><div class="stat-sub">Max {{duration overview.maxDelayMs}}</div></div>
+  <div class="stat"><div class="stat-label">Health</div><div class="mt-2">{{#if overview.disconnected}}{{badge "STALE" "Needs attention"}}{{else}}{{#if overview.connected}}{{badge "HEALTHY" "Operational"}}{{else}}{{badge "NEVER_CONNECTED" "No connections"}}{{/if}}{{/if}}</div></div>
+</section>
+
+<div class="card">
+  <div class="card-header"><h2 class="card-title">Systems</h2></div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>System</th><th>Health</th><th>Last contact</th><th>Accepted</th><th>Invalid</th><th>Auth failed</th><th>Pending</th></tr></thead>
+      <tbody>
+        {{#each overview.sources}}
+        <tr>
+          <td><a class="cell-main hover:text-emerald-700" href="/integrations/{{id}}">{{name}}</a><div class="mono text-slate-400">{{systemCode}}</div></td>
+          <td>{{badge health.status health.label}}</td>
+          <td class="whitespace-nowrap text-slate-500">{{#if lastSuccessfulConnectionAt}}{{ago lastSuccessfulConnectionAt}}{{else}}Never{{/if}}</td>
+          <td>{{number last24h.accepted}}</td>
+          <td class="{{#if last24h.invalid}}text-amber-600{{/if}}">{{number last24h.invalid}}</td>
+          <td class="{{#if last24h.authFailures}}text-red-600{{/if}}">{{number last24h.authFailures}}</td>
+          <td>{{default pendingReported "—"}}</td>
+        </tr>
+        {{else}}<tr><td colspan="7" class="empty">No systems registered</td></tr>{{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2 class="card-title">Recent errors</h2><a href="/integrations/logs" class="card-link">View all</a></div>
+  {{#if overview.recentErrors.length}}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Time</th><th>System</th><th>Result</th><th>Error</th><th>Caller</th></tr></thead>
+    <tbody>{{#each overview.recentErrors}}
+      <tr>
+        <td class="whitespace-nowrap text-slate-500">{{date createdAt}}</td>
+        <td>{{#if sourceSystem}}{{sourceSystem.name}}{{else}}<span class="text-slate-400">Unknown</span>{{/if}}</td>
+        <td>{{badge outcome}}</td>
+        <td class="mono">{{errorCode}}</td>
+        <td class="mono text-slate-500">{{default ipAddress "—"}}</td>
+      </tr>{{/each}}</tbody>
+  </table></div>
+  {{else}}<div class="empty">No errors</div>{{/if}}
+</div>
+{{> footer}}

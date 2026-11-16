@@ -1,0 +1,42 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Suspicious Activities</h1>
+    <p class="page-sub">Rule-based alerts for review</p>
+  </div>
+  <div class="actions">{{#if canConfigure}}<a href="/alerts/rules" class="btn-secondary">Detection rules</a>{{/if}}</div>
+</div>
+
+<section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <a href="/alerts?status=active" class="stat"><div class="stat-label">Open</div><div class="stat-value">{{counts.active}}</div></a>
+  <a href="/alerts?status=active&severity=CRITICAL" class="stat"><div class="stat-label">Critical</div><div class="stat-value {{#if counts.activeCritical}}text-red-600{{/if}}">{{counts.activeCritical}}</div></a>
+  <a href="/alerts?status=active&severity=HIGH" class="stat"><div class="stat-label">High</div><div class="stat-value {{#if counts.activeHigh}}text-orange-600{{/if}}">{{counts.activeHigh}}</div></a>
+  <a href="/alerts?status=" class="stat"><div class="stat-label">All time</div><div class="stat-value">{{counts.total}}</div></a>
+</section>
+
+<div class="card">
+  <form method="GET" action="/alerts" class="grid grid-cols-1 gap-3 border-b border-slate-100 p-4 md:grid-cols-3 xl:grid-cols-[2fr_1fr_1fr_1fr_auto]">
+    <input class="input" name="search" value="{{filters.search}}" placeholder="Search user or alert" aria-label="Search" />
+    <select class="input" name="status" data-autosubmit aria-label="Status">
+      <option value="">All statuses</option><option value="active" {{selected "active" filters.status}}>Open</option>
+      {{#each statuses}}<option value="{{this}}" {{selected this ../filters.status}}>{{statusText this}}</option>{{/each}}</select>
+    <select class="input" name="severity" data-autosubmit aria-label="Severity"><option value="">All severities</option>{{#each severities}}<option value="{{this}}" {{selected this ../filters.severity}}>{{statusText this}}</option>{{/each}}</select>
+    <select class="input" name="sourceSystemId" data-autosubmit aria-label="System"><option value="">All systems</option>{{#each sources}}<option value="{{id}}" {{selected id ../filters.sourceSystemId}}>{{name}}</option>{{/each}}</select>
+    <button class="btn-primary" type="submit">Filter</button>
+  </form>
+  {{#if alerts.length}}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Alert</th><th>User</th><th>System</th><th>Severity</th><th>Status</th><th>Detected</th></tr></thead>
+    <tbody>{{#each alerts}}<tr>
+      <td class="max-w-md"><a class="cell-main hover:text-emerald-700" href="/alerts/{{id}}">{{title}}</a><div class="cell-sub">{{alertCode}} · {{occurrenceCount}} events</div></td>
+      <td>{{default actorUsername "—"}}</td>
+      <td class="text-slate-600">{{default sourceSystem.name "—"}}</td>
+      <td>{{badge severity}}</td>
+      <td>{{badge status}}{{#if assignedTo}}<div class="cell-sub mt-1">{{assignedTo.fullName}}</div>{{/if}}</td>
+      <td class="whitespace-nowrap text-slate-500">{{date firstDetectedAt}}</td>
+    </tr>{{/each}}</tbody>
+  </table></div>
+  {{> pagination}}
+  {{else}}<div class="empty">No alerts</div>{{/if}}
+</div>
+{{> footer}}

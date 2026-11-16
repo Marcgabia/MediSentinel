@@ -1,0 +1,324 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * MediSentinel design system
+ * Colours are RGB triples in CSS variables so every Tailwind utility follows the theme.
+ * Dark theme is tuned for long sessions: soft blue-grey surfaces (no pure black),
+ * off-white text (no pure white) and muted status tints to reduce glare and eye strain.
+ * Theme is chosen in /js/theme.js (Light / Dark / System) and stored in localStorage.
+ */
+@layer base {
+  :root {
+    color-scheme: light;
+    --canvas: 244 246 249;
+    --surface: 255 255 255;
+    --ink: 15 23 42;
+    --onbrand: 255 255 255;
+    --shadow: 15 23 42;
+    --slate-50: 248 250 252;
+    --slate-100: 241 245 249;
+    --slate-200: 226 232 240;
+    --slate-300: 203 213 225;
+    --slate-400: 148 163 184;
+    --slate-500: 100 116 139;
+    --slate-600: 71 85 105;
+    --slate-700: 51 65 85;
+    --slate-800: 30 41 59;
+    --slate-900: 15 23 42;
+    --slate-950: 2 6 23;
+    --brand-50: 240 253 250;
+    --brand-100: 204 251 241;
+    --brand-200: 153 246 228;
+    --brand-300: 94 234 212;
+    --brand-400: 45 212 191;
+    --brand-500: 20 184 166;
+    --brand-600: 13 148 136;
+    --brand-700: 15 118 110;
+    --brand-800: 17 94 89;
+    --brand-900: 19 78 74;
+    --brand-950: 4 47 46;
+    --emerald-50: 236 253 245;
+    --emerald-100: 209 250 229;
+    --emerald-200: 167 243 208;
+    --emerald-300: 110 231 183;
+    --emerald-400: 52 211 153;
+    --emerald-500: 16 185 129;
+    --emerald-600: 5 150 105;
+    --emerald-700: 4 120 87;
+    --emerald-800: 6 95 70;
+    --emerald-900: 6 78 59;
+    --emerald-950: 2 44 34;
+    --red-50: 254 242 242;
+    --red-100: 254 226 226;
+    --red-200: 254 202 202;
+    --red-300: 252 165 165;
+    --red-400: 248 113 113;
+    --red-500: 239 68 68;
+    --red-600: 220 38 38;
+    --red-700: 185 28 28;
+    --red-800: 153 27 27;
+    --red-900: 127 29 29;
+    --red-950: 69 10 10;
+    --amber-50: 255 251 235;
+    --amber-100: 254 243 199;
+    --amber-200: 253 230 138;
+    --amber-300: 252 211 77;
+    --amber-400: 251 191 36;
+    --amber-500: 245 158 11;
+    --amber-600: 217 119 6;
+    --amber-700: 180 83 9;
+    --amber-800: 146 64 14;
+    --amber-900: 120 53 15;
+    --amber-950: 69 26 3;
+    --orange-50: 255 247 237;
+    --orange-100: 255 237 213;
+    --orange-200: 254 215 170;
+    --orange-300: 253 186 116;
+    --orange-400: 251 146 60;
+    --orange-500: 249 115 22;
+    --orange-600: 234 88 12;
+    --orange-700: 194 65 12;
+    --orange-800: 154 52 18;
+    --orange-900: 124 45 18;
+    --orange-950: 67 20 7;
+    --violet-50: 245 243 255;
+    --violet-100: 237 233 254;
+    --violet-200: 221 214 254;
+    --violet-300: 196 181 253;
+    --violet-400: 167 139 250;
+    --violet-500: 139 92 246;
+    --violet-600: 124 58 237;
+    --violet-700: 109 40 217;
+    --violet-800: 91 33 182;
+    --violet-900: 76 29 149;
+    --violet-950: 46 16 101;
+    --sky-50: 240 249 255;
+    --sky-100: 224 242 254;
+    --sky-200: 186 230 253;
+    --sky-300: 125 211 252;
+    --sky-400: 56 189 248;
+    --sky-500: 14 165 233;
+    --sky-600: 2 132 199;
+    --sky-700: 3 105 161;
+    --sky-800: 7 89 133;
+    --sky-900: 12 74 110;
+    --sky-950: 8 47 73;
+  }
+  html.dark {
+    color-scheme: dark;
+    --canvas: 14 18 26;
+    --surface: 22 27 37;
+    --ink: 232 236 241;
+    --onbrand: 4 47 46;
+    --shadow: 0 0 0;
+    --slate-50: 27 32 43;
+    --slate-100: 34 40 53;
+    --slate-200: 47 55 70;
+    --slate-300: 66 76 94;
+    --slate-400: 107 118 138;
+    --slate-500: 140 151 170;
+    --slate-600: 169 179 196;
+    --slate-700: 198 205 217;
+    --slate-800: 220 225 233;
+    --slate-900: 232 236 241;
+    --slate-950: 243 245 248;
+    --brand-50: 22 49 55;
+    --brand-100: 22 62 65;
+    --brand-200: 21 82 82;
+    --brand-300: 21 113 108;
+    --brand-400: 45 212 191;
+    --brand-500: 20 184 166;
+    --brand-600: 45 212 191;
+    --brand-700: 94 234 212;
+    --brand-800: 153 246 228;
+    --brand-900: 204 251 241;
+    --brand-950: 240 253 250;
+    --emerald-50: 21 49 50;
+    --emerald-100: 21 62 57;
+    --emerald-200: 20 82 69;
+    --emerald-300: 19 114 88;
+    --emerald-400: 52 211 153;
+    --emerald-500: 16 185 129;
+    --emerald-600: 52 211 153;
+    --emerald-700: 110 231 183;
+    --emerald-800: 167 243 208;
+    --emerald-900: 209 250 229;
+    --emerald-950: 236 253 245;
+    --red-50: 52 33 41;
+    --red-100: 70 36 44;
+    --red-200: 98 41 48;
+    --red-300: 141 50 54;
+    --red-400: 248 113 113;
+    --red-500: 239 68 68;
+    --red-600: 248 113 113;
+    --red-700: 252 165 165;
+    --red-800: 254 202 202;
+    --red-900: 254 226 226;
+    --red-950: 254 242 242;
+    --amber-50: 53 45 33;
+    --amber-100: 71 56 31;
+    --amber-200: 100 73 28;
+    --amber-300: 145 99 23;
+    --amber-400: 251 191 36;
+    --amber-500: 245 158 11;
+    --amber-600: 251 191 36;
+    --amber-700: 252 211 77;
+    --amber-800: 253 230 138;
+    --amber-900: 254 243 199;
+    --amber-950: 255 251 235;
+    --orange-50: 54 39 35;
+    --orange-100: 72 46 34;
+    --orange-200: 101 58 32;
+    --orange-300: 147 75 29;
+    --orange-400: 251 146 60;
+    --orange-500: 249 115 22;
+    --orange-600: 251 146 60;
+    --orange-700: 253 186 116;
+    --orange-800: 254 215 170;
+    --orange-900: 255 237 213;
+    --orange-950: 255 247 237;
+    --violet-50: 38 36 66;
+    --violet-100: 48 41 83;
+    --violet-200: 63 50 110;
+    --violet-300: 86 63 152;
+    --violet-400: 167 139 250;
+    --violet-500: 139 92 246;
+    --violet-600: 167 139 250;
+    --violet-700: 196 181 253;
+    --violet-800: 221 214 254;
+    --violet-900: 237 233 254;
+    --violet-950: 245 243 255;
+    --sky-50: 21 46 64;
+    --sky-100: 20 57 80;
+    --sky-200: 19 75 106;
+    --sky-300: 18 103 145;
+    --sky-400: 56 189 248;
+    --sky-500: 14 165 233;
+    --sky-600: 56 189 248;
+    --sky-700: 125 211 252;
+    --sky-800: 186 230 253;
+    --sky-900: 224 242 254;
+    --sky-950: 240 249 255;
+  }
+
+  html { -webkit-font-smoothing: antialiased; font-size: 14px; }
+  body { @apply bg-canvas text-slate-700; transition: background-color .2s ease, color .2s ease; }
+  h1, h2, h3 { @apply text-slate-900; }
+  ::selection { @apply bg-brand-100 text-slate-900; }
+  [x-cloak] { display: none; }
+
+  /* Calm scrollbars that match the theme */
+  * { scrollbar-width: thin; scrollbar-color: rgb(var(--slate-300)) transparent; }
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-thumb { background: rgb(var(--slate-300)); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
+  *::-webkit-scrollbar-track { background: transparent; }
+
+  /* Native controls (date pickers, selects) pick up the theme via color-scheme */
+  /* Hide Edge/IE's built-in password eye: the auth pages provide their own in every browser */
+  input[type="password"]::-ms-reveal, input[type="password"]::-ms-clear { display: none; }
+  select option { background-color: rgb(var(--surface)); color: rgb(var(--slate-800)); }
+  html.theme-switching *, html.theme-switching *::before, html.theme-switching *::after { transition: none !important; }
+}
+
+@layer components {
+  /* Layout */
+  .page-head { @apply flex flex-wrap items-end justify-between gap-3 pb-1; }
+  .page-title { @apply text-2xl font-semibold tracking-tight text-slate-900; }
+  .page-sub { @apply mt-1 text-sm text-slate-500; }
+  .actions { @apply flex flex-wrap items-center gap-2; }
+
+  /* Cards */
+  .card { @apply rounded-2xl border border-slate-200/80 bg-surface shadow-card; }
+  .card-header { @apply flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4; }
+  .card-title { @apply text-sm font-semibold text-slate-900; }
+  .card-body { @apply p-5; }
+  .card-link { @apply text-xs font-semibold text-brand-700 hover:text-brand-800; }
+
+  /* Buttons */
+  .btn { @apply inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply btn bg-brand-700 text-onbrand shadow-sm hover:bg-brand-800 dark:bg-brand-500 dark:hover:bg-brand-400; }
+  .btn-success { @apply btn bg-emerald-600 text-onbrand shadow-sm hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400; }
+  .btn-secondary { @apply btn border border-slate-200 bg-surface text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50; }
+  .btn-danger { @apply btn border border-red-200 bg-surface text-red-600 hover:bg-red-50; }
+  .btn-ghost { @apply btn px-2.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900; }
+  .btn-sm { @apply px-2.5 py-1.5 text-xs; }
+  .icon-btn { @apply relative inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500; }
+
+  /* Forms */
+  .label { @apply mb-1.5 block text-xs font-semibold text-slate-600; }
+  .input { @apply block w-full rounded-lg border border-slate-200 bg-surface px-3 py-2 text-sm text-slate-800 shadow-sm transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15; }
+  .help { @apply mt-1 text-xs text-slate-400; }
+  .check { @apply h-4 w-4 rounded border-slate-300 bg-surface text-brand-600 focus:ring-brand-500; }
+
+  /* Tables */
+  .table-wrap { @apply overflow-x-auto; }
+  .table { @apply min-w-full text-sm; }
+  .table thead th { @apply whitespace-nowrap border-b border-slate-100 bg-slate-50 px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500; }
+  .table tbody td { @apply border-b border-slate-100 px-4 py-3 align-middle; }
+  .table tbody tr:last-child td { @apply border-b-0; }
+  .table tbody tr { @apply transition-colors hover:bg-slate-50; }
+  .cell-main { @apply font-medium text-slate-900; }
+  .cell-sub { @apply text-xs text-slate-500; }
+
+  /* Stats */
+  .stat { @apply card relative block overflow-hidden p-4 transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-pop; }
+  .stat::before { content: ''; @apply absolute inset-x-0 top-0 h-0.5 bg-brand-500 opacity-0 transition; }
+  .stat:hover::before { @apply opacity-100; }
+  .stat-label { @apply text-xs font-semibold uppercase tracking-wide text-slate-500; }
+  .stat-value { @apply mt-1.5 text-2xl font-semibold tracking-tight text-slate-900; }
+  .stat-sub { @apply mt-0.5 text-xs text-slate-400; }
+
+  /* Definition lists */
+  .kv { @apply grid grid-cols-1 gap-x-6 gap-y-2.5 text-sm sm:grid-cols-[160px_1fr]; }
+  .kv dt { @apply text-slate-500; }
+  .kv dd { @apply break-words text-slate-900; }
+
+  /* Misc */
+  .mono { @apply font-mono text-xs; }
+  .link { @apply font-medium text-brand-700 hover:text-brand-800 hover:underline; }
+  .empty { @apply px-5 py-10 text-center text-sm text-slate-400; }
+  .notice { @apply rounded-xl border px-4 py-3 text-sm; }
+  .tab { @apply rounded-md px-2.5 py-1 text-xs font-medium text-slate-500 hover:text-slate-900; }
+  .tab-active { @apply bg-slate-100 text-slate-900 shadow-sm; }
+  .divider { @apply border-t border-slate-100; }
+
+  /* App shell */
+  .nav-section { @apply px-3 pb-1.5 pt-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-400; }
+  .nav-item { @apply relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13.5px] font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900; }
+  .nav-item svg { @apply h-[18px] w-[18px] flex-none text-slate-400 transition; }
+  .nav-item:hover svg { @apply text-slate-600; }
+  .nav-on { @apply bg-brand-50 text-brand-800 hover:bg-brand-50 hover:text-brand-800; }
+  .nav-on svg, .nav-on:hover svg { @apply text-brand-600; }
+  .nav-on::before { content: ''; @apply absolute -left-3 top-1.5 bottom-1.5 w-1 rounded-r-full bg-brand-500; }
+  .menu-item { @apply flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-slate-700 hover:bg-slate-50; }
+
+  /* Theme switcher */
+  .theme-seg { @apply grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-1; }
+  .theme-opt { @apply flex flex-col items-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-medium text-slate-500 transition hover:text-slate-900; }
+  .theme-opt[aria-pressed="true"] { @apply bg-surface text-slate-900 shadow-sm; }
+  .theme-icon-light, .theme-icon-dark { @apply h-5 w-5; }
+  html.dark .theme-icon-light { display: none; }
+  html:not(.dark) .theme-icon-dark { display: none; }
+
+  /* Auth pages */
+  .auth-shell { @apply grid min-h-screen lg:grid-cols-[1.05fr_1fr]; }
+  .auth-hero { @apply relative hidden overflow-hidden p-12 lg:flex lg:flex-col lg:justify-between; background: linear-gradient(145deg, #042f2e 0%, #0b3d3a 45%, #0f172a 100%); }
+  .auth-panel { @apply relative flex items-center justify-center p-6 sm:p-10; }
+  .auth-card { @apply w-full max-w-md; }
+  .auth-switch { @apply grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 text-sm font-medium; }
+  .auth-switch a { @apply rounded-lg px-3 py-2 text-center text-slate-500 transition hover:text-slate-900; }
+  .auth-switch a[aria-current="page"] { @apply bg-surface text-slate-900 shadow-sm; }
+}
+
+@media print {
+  .no-print, aside, header.topbar, footer { display: none !important; }
+  main { padding: 0 !important; }
+  body { background: #fff !important; }
+  .card { border-color: #e2e8f0 !important; box-shadow: none !important; break-inside: avoid; }
+  .print-only { display: block !important; }
+  table { font-size: 10px; }
+  a { color: inherit !important; text-decoration: none !important; }
+}
+.print-only { display: none; }

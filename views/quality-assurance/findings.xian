@@ -1,0 +1,30 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">QA Findings</h1>
+    <p class="page-sub">Issues found by verification runs</p>
+  </div>
+</div>
+<div class="card">
+  <form method="GET" action="/qa/findings" class="grid grid-cols-1 gap-3 border-b border-slate-100 p-4 md:grid-cols-3 xl:grid-cols-[2fr_1fr_1fr_1fr_auto]">
+    <input class="input" name="search" value="{{filters.search}}" placeholder="Search findings" aria-label="Search" />
+    <select class="input" name="status" data-autosubmit aria-label="Status"><option value="">All statuses</option><option value="unresolved" {{selected "unresolved" filters.status}}>Unresolved</option>{{#each statuses}}<option value="{{this}}" {{selected this ../filters.status}}>{{humanize this}}</option>{{/each}}</select>
+    <select class="input" name="severity" data-autosubmit aria-label="Severity"><option value="">All severities</option>{{#each severities}}<option value="{{this}}" {{selected this ../filters.severity}}>{{statusText this}}</option>{{/each}}</select>
+    <select class="input" name="category" data-autosubmit aria-label="Category"><option value="">All categories</option>{{#each categories}}<option value="{{code}}" {{selected code ../filters.category}}>{{label}}</option>{{/each}}</select>
+    <button class="btn-primary" type="submit">Filter</button>
+  </form>
+  {{#if findings.length}}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Finding</th><th>System</th><th>Severity</th><th>Status</th><th>Detected</th></tr></thead>
+    <tbody>{{#each findings}}<tr>
+      <td class="max-w-xl"><a class="cell-main hover:text-emerald-700" href="/qa/findings/{{id}}">{{title}}</a><div class="cell-sub">{{findingCode}} · {{categoryLabel}}</div></td>
+      <td class="text-slate-600">{{default sourceSystem.name "—"}}</td>
+      <td>{{badge severity}}</td>
+      <td>{{badge status}}</td>
+      <td class="whitespace-nowrap text-slate-500">{{date firstDetectedAt}}{{#if (gt occurrenceCount 1)}}<div class="cell-sub">seen {{occurrenceCount}}×</div>{{/if}}</td>
+    </tr>{{/each}}</tbody>
+  </table></div>
+  {{> pagination}}
+  {{else}}<div class="empty">No findings</div>{{/if}}
+</div>
+{{> footer}}

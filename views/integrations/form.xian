@@ -1,0 +1,51 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="{{#if isNew}}/integrations{{else}}/integrations/{{source.id}}{{/if}}" class="text-xs text-slate-500 hover:text-slate-900">← Back</a>
+    <h1 class="page-title mt-1">{{#if isNew}}Register system{{else}}Edit {{source.name}}{{/if}}</h1>
+  </div>
+</div>
+<form method="POST" action="{{#if isNew}}/integrations{{else}}/integrations/{{source.id}}{{/if}}" class="card max-w-3xl">
+  {{> csrf}}
+  <div class="card-body grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div>
+      <label class="label" for="name">Name</label>
+      <input class="input" id="name" name="name" required maxlength="150" value="{{source.name}}" placeholder="PharmaCore POS" />
+    </div>
+    <div>
+      <label class="label" for="systemCode">Code</label>
+      {{#if isNew}}<input class="input mono uppercase" id="systemCode" name="systemCode" required pattern="[A-Za-z][A-Za-z0-9_]{2,63}" maxlength="64" placeholder="PHARMACORE_POS" />
+      <p class="help">Used in every event. Cannot be changed.</p>
+      {{else}}<input class="input mono" value="{{source.systemCode}}" disabled />{{/if}}
+    </div>
+    <div class="sm:col-span-2">
+      <label class="label" for="description">Description</label>
+      <input class="input" id="description" name="description" value="{{source.description}}" />
+    </div>
+    <div>
+      <label class="label" for="apiEndpoint">System URL</label>
+      <input class="input" id="apiEndpoint" name="apiEndpoint" type="url" placeholder="https://pos.local" value="{{source.apiEndpoint}}" />
+    </div>
+    <div>
+      <label class="label" for="healthCheckUrl">Health check URL</label>
+      <input class="input" id="healthCheckUrl" name="healthCheckUrl" type="url" placeholder="https://pos.local/health" value="{{source.healthCheckUrl}}" />
+      <p class="help">Used by “Test connection”.</p>
+    </div>
+    <div>
+      <label class="label" for="environment">Environment</label>
+      <select class="input" id="environment" name="environment">{{#each environments}}<option value="{{this}}" {{selected this ../source.environment}}>{{humanize this}}</option>{{/each}}</select>
+    </div>
+    {{#unless isNew}}
+    <div>
+      <label class="label" for="status">Status</label>
+      <select class="input" id="status" name="status">{{#each statuses}}<option value="{{this}}" {{selected this ../source.status}}>{{humanize this}}</option>{{/each}}</select>
+      <p class="help">Suspended or retired systems cannot send events.</p>
+    </div>
+    {{/unless}}
+  </div>
+  <div class="flex justify-end gap-2 border-t border-slate-100 px-5 py-3">
+    <a class="btn-secondary" href="{{#if isNew}}/integrations{{else}}/integrations/{{source.id}}{{/if}}">Cancel</a>
+    <button class="btn-primary" type="submit">{{#if isNew}}Register{{else}}Save{{/if}}</button>
+  </div>
+</form>
+{{> footer}}

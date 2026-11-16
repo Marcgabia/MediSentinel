@@ -1,0 +1,64 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/user-activity" class="text-xs text-slate-500 hover:text-slate-900">← User Activity</a>
+    <h1 class="page-title mt-1">{{default identity.actorUsername userKey}}</h1>
+    <p class="page-sub">{{default identity.actorRole "No role"}} · {{source.name}}{{#if identity.actorUserId}} · <span class="mono">{{identity.actorUserId}}</span>{{/if}}</p>
+  </div>
+  <div class="actions">
+    <a href="/audit?sourceSystemId={{source.id}}&{{#if identity.actorUserId}}actorUserId={{encode identity.actorUserId}}{{else}}username={{encode identity.actorUsername}}{{/if}}" class="btn-secondary">All events</a>
+  </div>
+</div>
+
+<section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <div class="stat"><div class="stat-label">Total</div><div class="stat-value">{{number stats.total}}</div></div>
+  <div class="stat"><div class="stat-label">Successful</div><div class="stat-value text-emerald-600">{{number stats.success}}</div></div>
+  <div class="stat"><div class="stat-label">Failed</div><div class="stat-value {{#if stats.failed}}text-red-600{{/if}}">{{number stats.failed}}</div></div>
+  <div class="stat"><div class="stat-label">Denied</div><div class="stat-value {{#if stats.denied}}text-violet-600{{/if}}">{{number stats.denied}}</div></div>
+</section>
+
+<div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+  <div class="card xl:col-span-2">
+    <div class="card-header"><h2 class="card-title">Daily activity</h2><span class="text-xs text-slate-400">30 days · last active {{ago identity.occurredAt}}</span></div>
+    <div class="card-body h-56"><canvas data-chart="profile"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Actions</h2></div>
+    <ul class="divide-y divide-slate-100 text-sm">{{#each actionBreakdown}}<li class="flex justify-between px-5 py-2"><span>{{action actionType}}</span><span class="font-medium text-slate-900">{{n}}</span></li>{{/each}}</ul>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+  <div class="card xl:col-span-2">
+    <div class="card-header"><h2 class="card-title">Recent actions</h2></div>
+    {{#if recentActions.length}}
+    <div class="table-wrap"><table class="table"><tbody>
+      {{#each recentActions}}<tr><td class="whitespace-nowrap text-slate-500">{{date occurredAt}}</td><td><a class="link font-normal" href="/audit/{{id}}">{{action actionType}}</a><div class="cell-sub">{{entityId}}</div></td><td>{{badge outcome}}</td></tr>{{/each}}
+    </tbody></table></div>
+    {{else}}<div class="empty">None</div>{{/if}}
+  </div>
+  <div class="space-y-5">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Logins</h2></div>
+      {{#if recentLogins.length}}
+      <ul class="divide-y divide-slate-100 text-sm">{{#each recentLogins}}<li class="flex items-center justify-between gap-2 px-5 py-2.5"><div><a class="link font-normal" href="/audit/{{id}}">{{action actionType}}</a><div class="cell-sub">{{date occurredAt}}{{#if ipAddress}} · {{ipAddress}}{{/if}}</div></div>{{badge outcome}}</li>{{/each}}</ul>
+      {{else}}<div class="empty">None</div>{{/if}}
+    </div>
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Alerts</h2></div>
+      {{#if alerts.length}}
+      <ul class="divide-y divide-slate-100 text-sm">{{#each alerts}}<li class="flex items-center justify-between gap-2 px-5 py-2.5"><a class="link font-normal" href="/alerts/{{id}}">{{title}}</a>{{badge severity}}</li>{{/each}}</ul>
+      {{else}}<div class="empty">None</div>{{/if}}
+    </div>
+    {{#if otherSystems.length}}
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Same username elsewhere</h2></div>
+      <ul class="divide-y divide-slate-100 text-sm">{{#each otherSystems}}<li class="flex justify-between px-5 py-2.5"><a class="link font-normal" href="{{link}}">{{sourceSystemName}}</a><span class="text-slate-500">{{number total}} events</span></li>{{/each}}</ul>
+    </div>
+    {{/if}}
+  </div>
+</div>
+<script type="application/json" id="chart-data">{"profile": {{{jsonInline chart}}} }</script>
+<script src="/vendor/chart.umd.min.js"></script>
+<script src="/js/charts.js?v=3"></script>
+{{> footer}}

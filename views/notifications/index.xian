@@ -1,0 +1,32 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Notifications</h1>
+    <p class="page-sub">{{#if unreadNotifications}}{{unreadNotifications}} unread{{else}}All caught up{{/if}}</p>
+  </div>
+  <div class="actions"><form method="POST" action="/notifications/read-all">{{> csrf}}<button class="btn-secondary" type="submit">Mark all as read</button></form></div>
+</div>
+
+<div class="card">
+  <form method="GET" action="/notifications" class="flex flex-wrap gap-3 border-b border-slate-100 p-4">
+    <select class="input w-auto" name="status" data-autosubmit aria-label="Status"><option value="">All</option><option value="unread" {{selected "unread" filters.status}}>Unread</option><option value="read" {{selected "read" filters.status}}>Read</option></select>
+    <select class="input w-auto" name="type" data-autosubmit aria-label="Category"><option value="">All categories</option>{{#each types}}<option value="{{code}}" {{selected code ../filters.type}}>{{label}}</option>{{/each}}</select>
+  </form>
+  {{#if notifications.length}}
+  <ul class="divide-y divide-slate-100">
+    {{#each notifications}}
+    <li class="flex items-start gap-4 px-5 py-4 {{#unless isRead}}bg-emerald-50/30{{/unless}}">
+      <span class="mt-1.5 h-2 w-2 flex-none rounded-full {{#if isRead}}bg-slate-200{{else}}bg-emerald-500{{/if}}"></span>
+      <div class="min-w-0 flex-1">
+        <a href="/notifications/{{id}}/open" class="font-medium text-slate-900 hover:text-emerald-700">{{title}}</a>
+        <p class="mt-0.5 text-sm text-slate-500">{{message}}</p>
+        <div class="mt-1 flex items-center gap-2 text-xs text-slate-400">{{badge severity}}<span>{{typeLabel}}</span><span>·</span><span>{{ago createdAt}}</span></div>
+      </div>
+      <form method="POST" action="/notifications/{{id}}/read">{{> csrf}}<input type="hidden" name="state" value="{{#if isRead}}unread{{else}}read{{/if}}" /><button class="btn-ghost btn-sm" type="submit">{{#if isRead}}Mark unread{{else}}Mark read{{/if}}</button></form>
+    </li>
+    {{/each}}
+  </ul>
+  {{> pagination}}
+  {{else}}<div class="empty">No notifications</div>{{/if}}
+</div>
+{{> footer}}

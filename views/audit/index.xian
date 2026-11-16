@@ -1,0 +1,82 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Audit Trail</h1>
+    <p class="page-sub">{{number pagination.total}} events · read-only</p>
+  </div>
+  <div class="actions">
+    {{#if canExport}}<a class="btn-secondary" href="/audit/export?{{exportQuery}}">Export CSV</a>{{/if}}
+  </div>
+</div>
+{{> audit-tabs}}
+
+<form method="GET" action="/audit" class="card no-print">
+  <div class="grid grid-cols-1 gap-3 p-4 md:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr_auto]">
+    <input class="input" name="q" value="{{filters.q}}" placeholder="Search user, event ID, record or description" aria-label="Search" />
+    <select class="input" name="sourceSystemId" aria-label="System">
+      <option value="">All systems</option>
+      {{#each options.sources}}<option value="{{id}}" {{selected id ../filters.sourceSystemId}}>{{name}}</option>{{/each}}
+    </select>
+    <select class="input" name="actionType" aria-label="Action">
+      <option value="">All actions</option>
+      {{#each options.eventTypes}}<option value="{{code}}" {{selected code ../filters.actionType}}>{{name}}</option>{{/each}}
+    </select>
+    <select class="input" name="outcome" aria-label="Outcome">
+      <option value="">All outcomes</option>
+      {{#each options.outcomes}}<option value="{{this}}" {{selected this ../filters.outcome}}>{{statusText this}}</option>{{/each}}
+    </select>
+    <div class="flex gap-2">
+      <button class="btn-primary" type="submit">Search</button>
+      <button class="btn-ghost" type="button" data-toggle="more-filters">More</button>
+    </div>
+  </div>
+  <div id="more-filters" class="{{#unless (or filters.username filters.eventId filters.entityId filters.description filters.sourceModule filters.actorRole filters.severity filters.from filters.to filters.correlationId filters.branchId filters.hideRoutine (eq filters.sort 'oldest'))}}hidden{{/unless}} divider grid grid-cols-1 gap-3 p-4 md:grid-cols-3 xl:grid-cols-5">
+    <div><label class="label">Branch ID</label><input class="input mono" name="branchId" value="{{filters.branchId}}" /></div>
+    <div class="flex items-end pb-2"><label class="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" name="hideRoutine" value="true" class="check" {{checked filters.hideRoutine}} /> Hide routine access events</label></div>
+    <div><label class="label">Username</label><input class="input" name="username" value="{{filters.username}}" /></div>
+    <div><label class="label">Event ID</label><input class="input mono" name="eventId" value="{{filters.eventId}}" /></div>
+    <div><label class="label">Record ID</label><input class="input mono" name="entityId" value="{{filters.entityId}}" /></div>
+    <div><label class="label">Description</label><input class="input" name="description" value="{{filters.description}}" /></div>
+    <div><label class="label">Module</label>
+      <select class="input" name="sourceModule"><option value="">All</option>{{#each options.modules}}<option value="{{this}}" {{selected this ../filters.sourceModule}}>{{this}}</option>{{/each}}</select></div>
+    <div><label class="label">User role</label>
+      <select class="input" name="actorRole"><option value="">All</option>{{#each options.roles}}<option value="{{this}}" {{selected this ../filters.actorRole}}>{{this}}</option>{{/each}}</select></div>
+    <div><label class="label">Severity</label>
+      <select class="input" name="severity"><option value="">All</option>{{#each options.severities}}<option value="{{this}}" {{selected this ../filters.severity}}>{{statusText this}}</option>{{/each}}</select></div>
+    <div><label class="label">From</label><input class="input" type="datetime-local" name="from" value="{{filters.from}}" /></div>
+    <div><label class="label">To</label><input class="input" type="datetime-local" name="to" value="{{filters.to}}" /></div>
+    <div><label class="label">Sort</label>
+      <select class="input" name="sort"><option value="newest" {{selected "newest" filters.sort}}>Newest first</option><option value="oldest" {{selected "oldest" filters.sort}}>Oldest first</option></select></div>
+    {{#if filters.correlationId}}<input type="hidden" name="correlationId" value="{{filters.correlationId}}" />{{/if}}
+  </div>
+  {{#if hasFilters}}<div class="divider px-4 py-2 text-xs"><a class="link" href="/audit">Clear filters</a></div>{{/if}}
+</form>
+
+<div class="card">
+  {{#if logs.length}}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Time</th><th>Event</th><th>User</th><th>System</th><th>Outcome</th><th>Severity</th></tr></thead>
+      <tbody>
+        {{#each logs}}
+        <tr>
+          <td class="whitespace-nowrap text-slate-500">{{date occurredAt}}</td>
+          <td class="max-w-md">
+            <a href="/audit/{{id}}" class="cell-main hover:text-emerald-700">{{action actionType}}</a>
+            <div class="cell-sub truncate" title="{{description}}">{{#if entityId}}<span class="mono">{{entityId}}</span> · {{/if}}{{truncate description 70}}</div>
+          </td>
+          <td><div class="text-slate-900">{{default actorUsername (default actorUserId "—")}}</div>{{#if actorRole}}<div class="cell-sub">{{actorRole}}</div>{{/if}}</td>
+          <td><div>{{sourceSystemName}}</div><div class="cell-sub">{{sourceModule}}</div></td>
+          <td>{{badge outcome}}</td>
+          <td>{{badge severity}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{> pagination}}
+  {{else}}
+  <div class="empty">{{#if hasFilters}}No events match these filters{{else}}No events yet{{/if}}</div>
+  {{/if}}
+</div>
+{{> footer}}

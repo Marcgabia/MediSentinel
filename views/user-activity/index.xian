@@ -1,0 +1,73 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">User Activity</h1>
+    <p class="page-sub">Users are tracked per system</p>
+  </div>
+</div>
+
+<section class="grid grid-cols-1 gap-5 xl:grid-cols-2">
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Failed logins</h2><span class="text-xs text-slate-400">7 days</span></div>
+    {{#if overview.failedLogins.length}}
+    <table class="table"><tbody>
+      {{#each overview.failedLogins}}<tr><td><a class="link" href="{{link}}">{{default username userKey}}</a><div class="cell-sub">{{sourceSystemName}}</div></td><td class="text-right"><span class="font-semibold text-red-600">{{n}}</span> <span class="text-xs text-slate-400">· {{ago last}}</span></td></tr>{{/each}}
+    </tbody></table>
+    {{else}}<div class="empty">None</div>{{/if}}
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Access denied</h2><span class="text-xs text-slate-400">7 days</span></div>
+    {{#if overview.denied.length}}
+    <table class="table"><tbody>
+      {{#each overview.denied}}<tr><td><a class="link" href="{{link}}">{{default actorUsername actorUserId}}</a><div class="cell-sub">{{sourceSystemName}}</div></td><td class="text-xs text-slate-500">{{truncate description 60}}</td><td class="whitespace-nowrap text-right text-xs text-slate-400"><a href="/audit/{{id}}">{{ago occurredAt}}</a></td></tr>{{/each}}
+    </tbody></table>
+    {{else}}<div class="empty">None</div>{{/if}}
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Role and permission changes</h2></div>
+    {{#if overview.roleChanges.length}}
+    <table class="table"><tbody>
+      {{#each overview.roleChanges}}<tr><td><a class="link" href="{{link}}">{{default actorUsername actorUserId}}</a><div class="cell-sub">{{sourceSystemName}}</div></td><td class="text-xs text-slate-500">{{action actionType}} · {{entityId}}</td><td class="whitespace-nowrap text-right text-xs text-slate-400"><a href="/audit/{{id}}">{{ago occurredAt}}</a></td></tr>{{/each}}
+    </tbody></table>
+    {{else}}<div class="empty">None</div>{{/if}}
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Repeated sensitive actions</h2><span class="text-xs text-slate-400">24 hours</span></div>
+    {{#if overview.repeatedSensitive.length}}
+    <table class="table"><tbody>
+      {{#each overview.repeatedSensitive}}<tr><td><a class="link" href="{{link}}">{{default username userKey}}</a><div class="cell-sub">{{sourceSystemName}}</div></td><td class="text-right font-semibold">{{n}}</td></tr>{{/each}}
+    </tbody></table>
+    {{else}}<div class="empty">None</div>{{/if}}
+  </div>
+</section>
+
+<div class="card">
+  <div class="card-header"><h2 class="card-title">All users</h2></div>
+  <form method="GET" action="/user-activity" class="grid grid-cols-1 gap-3 border-b border-slate-100 p-4 md:grid-cols-3 xl:grid-cols-[2fr_1fr_1fr_1fr_auto]">
+    <input class="input" name="search" value="{{filters.search}}" placeholder="Username or user ID" aria-label="Search" />
+    <select class="input" name="sourceSystemId" aria-label="System"><option value="">All systems</option>{{#each sources}}<option value="{{id}}" {{selected id ../filters.sourceSystemId}}>{{name}}</option>{{/each}}</select>
+    <select class="input" name="role" aria-label="Role"><option value="">All roles</option>{{#each roles}}<option value="{{this}}" {{selected this ../filters.role}}>{{this}}</option>{{/each}}</select>
+    <select class="input" name="sort" aria-label="Sort">
+      <option value="activity" {{selected "activity" filters.sort}}>Latest activity</option>
+      <option value="total" {{selected "total" filters.sort}}>Most activity</option>
+      <option value="failed" {{selected "failed" filters.sort}}>Most failures</option>
+      <option value="username" {{selected "username" filters.sort}}>Username</option>
+    </select>
+    <button class="btn-primary" type="submit">Filter</button>
+  </form>
+  {{#if actors.length}}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>User</th><th>System</th><th>Role</th><th>Events</th><th>Failed</th><th>Last active</th></tr></thead>
+    <tbody>{{#each actors}}<tr>
+      <td><a class="cell-main hover:text-emerald-700" href="{{link}}">{{default username userKey}}</a>{{#if userId}}<div class="mono text-slate-400">{{userId}}</div>{{/if}}</td>
+      <td class="text-slate-600">{{sourceSystemName}}</td>
+      <td class="text-slate-600">{{default role "—"}}</td>
+      <td>{{number total}}</td>
+      <td class="{{#if failed}}font-medium text-red-600{{/if}}">{{number failed}}</td>
+      <td class="whitespace-nowrap text-slate-500">{{ago lastActivity}}</td>
+    </tr>{{/each}}</tbody>
+  </table></div>
+  {{> pagination}}
+  {{else}}<div class="empty">No users found</div>{{/if}}
+</div>
+{{> footer}}

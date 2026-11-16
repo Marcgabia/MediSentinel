@@ -1,0 +1,45 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <a href="/audit/cross-system" class="text-xs text-slate-500 hover:text-slate-900">← Cross-system activity</a>
+    <h1 class="page-title mt-1">Cross-System Identities</h1>
+    <p class="page-sub">Explicit, verified links between user accounts on different systems</p>
+  </div>
+</div>
+{{> audit-tabs}}
+
+<div class="notice border-slate-200 bg-slate-50 text-slate-700">
+  Accounts are linked <strong>only</strong> by a verified shared identifier sent by the source system (<span class="mono">actor.sharedUserId</span>) or by a mapping recorded here. Identical usernames on different systems are never treated as the same person. Every change is recorded in the audit trail.
+</div>
+
+<form method="POST" action="/audit/identities" class="card">
+  {{> csrf}}
+  <div class="card-header"><h2 class="card-title">Add mapping</h2></div>
+  <div class="grid grid-cols-1 gap-3 p-4 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1fr_2fr_auto]">
+    <div><label class="label">Person key</label><input class="input mono" name="personKey" required maxlength="64" value="{{prefill.personKey}}" placeholder="EMP-0012" /></div>
+    <div><label class="label">Display name</label><input class="input" name="displayName" maxlength="150" placeholder="Optional" /></div>
+    <div><label class="label">System</label><select class="input" name="sourceSystemId" required>{{#each sources}}<option value="{{id}}" {{selected id ../prefill.sourceSystemId}}>{{name}}</option>{{/each}}</select></div>
+    <div><label class="label">User ID on that system</label><input class="input mono" name="actorUserId" required maxlength="128" value="{{prefill.actorUserId}}" /></div>
+    <div><label class="label">How was this verified?</label><input class="input" name="verificationNote" required minlength="5" maxlength="500" placeholder="e.g. HR employee record checked by J. Cruz" /></div>
+    <div class="flex items-end"><button class="btn-primary" type="submit">Add</button></div>
+  </div>
+</form>
+
+<div class="card">
+  <div class="card-header"><h2 class="card-title">Mappings</h2><a class="card-link" href="/audit/identities{{#unless showAll}}?all=true{{/unless}}">{{#if showAll}}Active only{{else}}Include inactive{{/if}}</a></div>
+  {{#if mappings.length}}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Person</th><th>System</th><th>User ID</th><th>Verification</th><th>Added</th><th>Status</th><th></th></tr></thead>
+    <tbody>{{#each mappings}}<tr>
+      <td><a class="link mono" href="/audit/cross-system?person={{encode personKey}}">{{personKey}}</a>{{#if displayName}}<div class="cell-sub">{{displayName}}</div>{{/if}}</td>
+      <td class="text-slate-600">{{sourceSystem.name}}</td>
+      <td class="mono">{{actorUserId}}</td>
+      <td class="max-w-sm text-xs text-slate-600">{{verificationNote}}</td>
+      <td class="whitespace-nowrap text-xs text-slate-500">{{date createdAt}}<div>{{default createdBy.fullName ""}}</div></td>
+      <td>{{#if isActive}}{{badge "ACTIVE"}}{{else}}{{badge "INACTIVE"}}{{/if}}</td>
+      <td class="text-right">{{#if isActive}}<form method="POST" action="/audit/identities/{{id}}/deactivate" data-confirm="Deactivate the mapping {{personKey}} ↔ {{actorUserId}}?">{{> csrf}}<button class="btn-ghost btn-sm" type="submit">Deactivate</button></form>{{/if}}</td>
+    </tr>{{/each}}</tbody>
+  </table></div>
+  {{else}}<div class="empty">No identity mappings yet</div>{{/if}}
+</div>
+{{> footer}}

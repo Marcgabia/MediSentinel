@@ -1,0 +1,35 @@
+{{> head}}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">System Integrations</h1>
+    <p class="page-sub">Connection status is based on real API traffic</p>
+  </div>
+  <div class="actions">
+    <a href="/integrations/monitor" class="btn-secondary">Monitoring</a>
+    <a href="/integrations/logs" class="btn-secondary">API logs</a>
+    {{#if canManage}}<a href="/integrations/new" class="btn-primary">Register system</a>{{/if}}
+  </div>
+</div>
+
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+  {{#each sources}}
+  <a href="/integrations/{{id}}" class="card flex flex-col gap-4 p-5 transition hover:border-slate-300">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <div class="truncate font-semibold text-slate-900">{{name}}</div>
+        <div class="mono text-slate-400">{{systemCode}}</div>
+      </div>
+      {{badge health.status health.label}}
+    </div>
+    <dl class="grid grid-cols-3 gap-2 text-xs">
+      <div><dt class="text-slate-400">Events</dt><dd class="mt-0.5 text-sm font-semibold text-slate-900">{{number totalEvents}}</dd></div>
+      <div><dt class="text-slate-400">Last event</dt><dd class="mt-0.5 text-sm text-slate-700">{{#if lastEventReceivedAt}}{{ago lastEventReceivedAt}}{{else}}—{{/if}}</dd></div>
+      <div><dt class="text-slate-400">Keys</dt><dd class="mt-0.5 text-sm text-slate-700">{{#if isInternal}}—{{else}}{{activeCredentials}}{{/if}}</dd></div>
+    </dl>
+    <div class="flex items-center gap-2 text-xs text-slate-400">
+      {{environment}}{{#if (ne status "ACTIVE")}} · {{statusText status}}{{/if}}
+    </div>
+  </a>
+  {{/each}}
+</div>
+{{> footer}}
